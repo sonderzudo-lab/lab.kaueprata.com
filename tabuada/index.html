@@ -72,35 +72,44 @@
   /* Instrumentos de corrida: velocidade e vidas ficam perto do carro, no
      canto inferior esquerdo, em vez de disputarem atenção com o progresso. */
   #cockpit-hud {
-    --vel-giro: -116deg; position: absolute; z-index: 4;
+    --vel-giro: -128deg; --vel-cor: var(--marca); position: absolute; z-index: 4;
     left: clamp(10px, 2.4vw, 22px); bottom: max(clamp(10px, 2.4vw, 22px), env(safe-area-inset-bottom));
     display: flex; align-items: flex-end; gap: 10px; opacity: 0; pointer-events: none;
     transition: opacity .25s;
   }
   #cockpit-hud.ativo { opacity: 1; }
   #f-vel {
-    position: relative; width: 142px; height: 106px; overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--painel-borda) 85%, transparent);
-    border-radius: 76px 76px 20px 20px;
-    background: color-mix(in srgb, var(--painel) 91%, transparent);
-    box-shadow: 0 12px 32px rgba(0,0,0,.34), inset 0 0 0 5px rgba(0,0,0,.1);
-    backdrop-filter: blur(8px);
+    position: relative; width: 154px; height: 126px; overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--painel-borda) 82%, white 8%);
+    border-radius: 86px 86px 24px 24px;
+    background:
+      radial-gradient(circle at 50% 53%, color-mix(in srgb, var(--painel) 94%, #000 6%) 0 49%, transparent 50%),
+      linear-gradient(145deg, color-mix(in srgb, var(--painel) 96%, white 4%), color-mix(in srgb, var(--painel) 82%, #000 18%));
+    box-shadow: 0 14px 38px rgba(0,0,0,.38), inset 0 0 0 5px rgba(0,0,0,.13), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter: blur(10px); transition: border-color .2s, box-shadow .2s;
   }
+  #f-vel.acelerando { border-color: color-mix(in srgb, var(--vel-cor) 70%, white 12%); box-shadow: 0 14px 38px rgba(0,0,0,.38), 0 0 24px color-mix(in srgb, var(--vel-cor) 28%, transparent), inset 0 0 0 5px rgba(0,0,0,.13); }
   .vel-arco {
-    position: absolute; width: 112px; height: 112px; left: 14px; top: 13px; border-radius: 50%;
-    background: conic-gradient(from 220deg, var(--marca) 0 7deg, transparent 7deg 18deg, var(--tinta-fraca) 18deg 24deg, transparent 24deg 42deg, var(--tinta-fraca) 42deg 48deg, transparent 48deg 66deg, var(--tinta-fraca) 66deg 72deg, transparent 72deg 90deg, var(--tinta-fraca) 90deg 96deg, transparent 96deg 114deg, var(--tinta-fraca) 114deg 120deg, transparent 120deg 138deg, var(--ruim) 138deg 146deg, transparent 146deg 360deg);
-    opacity: .8;
+    position: absolute; width: 122px; height: 122px; left: 15px; top: 11px; border-radius: 50%;
+    background:
+      conic-gradient(from 218deg, var(--vel-cor) 0 7deg, transparent 7deg 20deg, var(--tinta-fraca) 20deg 24deg, transparent 24deg 43deg, var(--tinta-fraca) 43deg 47deg, transparent 47deg 66deg, var(--tinta-fraca) 66deg 70deg, transparent 70deg 89deg, var(--tinta-fraca) 89deg 93deg, transparent 93deg 112deg, var(--tinta-fraca) 112deg 116deg, transparent 116deg 135deg, #ffb52e 135deg 140deg, transparent 140deg 158deg, var(--ruim) 158deg 166deg, transparent 166deg 360deg);
+    opacity: .9; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--vel-cor) 25%, transparent));
   }
-  .vel-arco::after { content: ""; position: absolute; inset: 10px; border-radius: 50%; background: color-mix(in srgb, var(--painel) 96%, transparent); }
+  .vel-arco::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: color-mix(in srgb, var(--painel) 97%, transparent); box-shadow: inset 0 3px 12px rgba(0,0,0,.28); }
+  .vel-rotulo { position: absolute; z-index: 3; top: 25px; left: 0; right: 0; text-align: center; color: var(--tinta-fraca); font-size: 7px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+  .vel-num { position: absolute; z-index: 3; color: color-mix(in srgb, var(--tinta-fraca) 90%, transparent); font: 700 8px var(--corpo); font-variant-numeric: tabular-nums; }
+  .vel-num.zero { left: 26px; top: 74px; }
+  .vel-num.oitenta { left: 70px; top: 37px; }
+  .vel-num.cento-sessenta { right: 19px; top: 74px; color: color-mix(in srgb, var(--ruim) 78%, var(--tinta)); }
   #ponteiro-vel {
-    position: absolute; z-index: 2; left: 69px; bottom: 23px; width: 45px; height: 3px;
-    border-radius: 99px; background: var(--marca); box-shadow: 0 0 9px color-mix(in srgb, var(--marca) 70%, transparent);
-    transform-origin: 1px 50%; transform: rotate(var(--vel-giro)); transition: transform .28s ease-out;
+    position: absolute; z-index: 4; left: 76px; bottom: 34px; width: 48px; height: 3px;
+    border-radius: 99px; background: linear-gradient(90deg, var(--vel-cor), #fff4c2); box-shadow: 0 0 10px color-mix(in srgb, var(--vel-cor) 78%, transparent);
+    transform-origin: 1px 50%; transform: rotate(var(--vel-giro));
   }
-  #ponteiro-vel::after { content: ""; position: absolute; left: -5px; top: -5px; width: 13px; height: 13px; border: 3px solid var(--marca); border-radius: 50%; background: var(--painel); }
-  .vel-leitura { position: absolute; z-index: 3; left: 0; right: 0; bottom: 5px; display: flex; align-items: baseline; justify-content: center; gap: 4px; font-family: var(--display); }
-  .vel-leitura .valor { font-size: 23px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .vel-leitura small { color: var(--tinta-fraca); font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
+  #ponteiro-vel::after { content: ""; position: absolute; left: -6px; top: -6px; width: 15px; height: 15px; border: 3px solid var(--vel-cor); border-radius: 50%; background: var(--painel); box-shadow: 0 0 0 3px rgba(0,0,0,.2); }
+  .vel-leitura { position: absolute; z-index: 5; left: 0; right: 0; bottom: 6px; display: flex; align-items: baseline; justify-content: center; gap: 4px; font-family: var(--display); }
+  .vel-leitura .valor { min-width: 34px; text-align: right; font-size: 24px; font-weight: 850; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 2px 8px rgba(0,0,0,.45); }
+  .vel-leitura small { color: var(--tinta-fraca); font-size: 7px; letter-spacing: .1em; text-transform: uppercase; }
 
   #f-vidas {
     display: grid; gap: 6px; min-width: 112px; padding: 10px 13px 11px;
@@ -451,9 +460,14 @@
     #pergunta-fixa { top: 66px; padding: 7px 14px; }
     #flash { top: 64px; width: calc(100% - 22px); }
     #cockpit-hud { left: 8px; bottom: max(8px, env(safe-area-inset-bottom)); gap: 6px; }
-    #f-vel { width: 112px; height: 84px; border-radius: 60px 60px 16px 16px; }
-    .vel-arco { width: 88px; height: 88px; left: 11px; top: 10px; }
-    #ponteiro-vel { left: 55px; bottom: 19px; width: 35px; }
+    #f-vel { width: 118px; height: 94px; border-radius: 64px 64px 17px 17px; }
+    .vel-arco { width: 92px; height: 92px; left: 12px; top: 8px; }
+    .vel-rotulo { top: 19px; font-size: 6px; }
+    .vel-num { font-size: 6px; }
+    .vel-num.zero { left: 21px; top: 55px; }
+    .vel-num.oitenta { left: 54px; top: 28px; }
+    .vel-num.cento-sessenta { right: 14px; top: 55px; }
+    #ponteiro-vel { left: 58px; bottom: 27px; width: 37px; }
     .vel-leitura { bottom: 3px; }
     .vel-leitura .valor { font-size: 18px; }
     #f-vidas { min-width: 82px; padding: 8px 9px 9px; }
@@ -486,10 +500,14 @@
   </div>
 
   <div id="cockpit-hud" hidden>
-    <div id="f-vel" role="meter" aria-label="Velocidade" aria-valuemin="60" aria-valuemax="150" aria-valuenow="60">
+    <div id="f-vel" role="meter" aria-label="Velocidade" aria-valuemin="0" aria-valuemax="160" aria-valuenow="90">
       <span class="vel-arco" aria-hidden="true"></span>
+      <span class="vel-rotulo" aria-hidden="true">velocidade</span>
+      <span class="vel-num zero" aria-hidden="true">0</span>
+      <span class="vel-num oitenta" aria-hidden="true">80</span>
+      <span class="vel-num cento-sessenta" aria-hidden="true">160</span>
       <i id="ponteiro-vel" aria-hidden="true"></i>
-      <span class="vel-leitura"><span class="valor" id="v-vel">60</span><small>km/h</small></span>
+      <span class="vel-leitura"><span class="valor" id="v-vel">90</span><small>km/h</small></span>
     </div>
     <div id="f-vidas"><span class="rotulo">Integridade</span><span id="vidas"></span></div>
   </div>
@@ -863,13 +881,20 @@
         const vibra = Math.sin(t * 18) * r * .015;
         ctx.translate(0, vibra);
 
-        // Rodas vistas por trás: elipses e brilho lateral dão volume sem WebGL.
+        // Rodas vistas por trás: pneus largos, banda e cubos dão volume.
         for (const s of [-1, 1]) {
           const roda = ctx.createLinearGradient(s * r * .9, 0, s * r * .5, 0);
           roda.addColorStop(0, "#07090d"); roda.addColorStop(.48, "#303847"); roda.addColorStop(1, "#090b10");
           ctx.fillStyle = roda;
           ctx.beginPath(); ctx.ellipse(s * r * .72, r * .46, r * .25, r * .43, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = "#788495";
+          ctx.beginPath(); ctx.ellipse(s * r * .72, r * .47, r * .09, r * .18, 0, 0, Math.PI * 2); ctx.fill();
         }
+
+        // Aerofólio aparece por trás da carroceria, sem parecer colado nela.
+        ctx.fillStyle = "#111827";
+        ctx.fillRect(-r*.63,-r*.48,r*.12,r*.42); ctx.fillRect(r*.51,-r*.48,r*.12,r*.42);
+        ctx.beginPath(); ctx.roundRect(-r*.94,-r*.57,r*1.88,r*.2,r*.08); ctx.fill(); ctx.stroke();
 
         const lateral = ctx.createLinearGradient(-r, 0, r, 0);
         lateral.addColorStop(0, "#111827"); lateral.addColorStop(.22, cor); lateral.addColorStop(.56, cor); lateral.addColorStop(1, "#111827");
@@ -886,14 +911,23 @@
         ctx.fillStyle = vidro;
         poligono(ctx, [[-r*.28,-r*.82],[r*.28,-r*.82],[r*.4,-r*.4],[-r*.4,-r*.4]], true, false);
 
-        ctx.fillStyle = "#ff3d55";
+        // Faixa central e vincos deixam a silhueta GT clara na miniatura.
+        ctx.fillStyle = "rgba(255,255,255,.78)";
+        poligono(ctx, [[-r*.08,-r*.92],[r*.08,-r*.92],[r*.12,r*.5],[-r*.12,r*.5]], true, false);
+        ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = Math.max(r*.035,1);
+        ctx.beginPath(); ctx.moveTo(-r*.48,-r*.3); ctx.lineTo(-r*.63,r*.5); ctx.moveTo(r*.48,-r*.3); ctx.lineTo(r*.63,r*.5); ctx.stroke();
+
+        ctx.shadowColor = "#ff2749"; ctx.shadowBlur = r*.16; ctx.fillStyle = "#ff2749";
         for (const s of [-1, 1]) {
           ctx.beginPath(); ctx.roundRect(s*r*.58-r*.15, r*.2, r*.3, r*.19, r*.06); ctx.fill();
         }
+        ctx.shadowBlur = 0;
         ctx.fillStyle = "rgba(255,255,255,.72)";
         ctx.fillRect(-r*.48, -r*.22, r*.96, r*.055);
         ctx.fillStyle = "#111827";
         ctx.beginPath(); ctx.roundRect(-r*.34, r*.56, r*.68, r*.13, r*.05); ctx.fill();
+        ctx.fillStyle = "#aab3c0";
+        for(const s of [-1,1]) { ctx.beginPath(); ctx.ellipse(s*r*.31,r*.7,r*.1,r*.055,0,0,Math.PI*2); ctx.fill(); }
       },
     },
     foguete: {
@@ -904,21 +938,32 @@
         fogo.addColorStop(0, "#fff7a8"); fogo.addColorStop(.35, "#ffb02e"); fogo.addColorStop(1, "rgba(255,63,72,0)");
         ctx.fillStyle = fogo;
         poligono(ctx, [[-r*.32,r*.68],[0,r*.9+chama],[r*.32,r*.68]], true, false);
+        ctx.fillStyle = "rgba(255,255,220,.88)";
+        poligono(ctx, [[-r*.12,r*.7],[0,r*.72+chama*.62],[r*.12,r*.7]], true, false);
         contorno(ctx, r);
         const aleta = ctx.createLinearGradient(-r, 0, r, 0);
         aleta.addColorStop(0, "#7e1728"); aleta.addColorStop(.5, "#ff5d5d"); aleta.addColorStop(1, "#7e1728");
         ctx.fillStyle = aleta;
         for (const s of [-1, 1]) {
           poligono(ctx, [[s*r*.38,r*.05],[s*r*.96,r*.76],[s*r*.34,r*.68]]);
+          ctx.fillStyle = "#3b4657";
+          ctx.beginPath(); ctx.roundRect(s*r*.55-r*.13,r*.24,r*.26,r*.5,r*.11); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = aleta;
         }
         const corpo = ctx.createLinearGradient(-r*.45, 0, r*.45, 0);
         corpo.addColorStop(0, "#6f7d91"); corpo.addColorStop(.2, "#f5f8fc"); corpo.addColorStop(.52, cor); corpo.addColorStop(.82, "#d9e1eb"); corpo.addColorStop(1, "#566477");
         ctx.fillStyle = corpo;
         ctx.beginPath(); ctx.moveTo(0,-r*1.2); ctx.quadraticCurveTo(r*.55,-r*.28,r*.39,r*.72); ctx.quadraticCurveTo(0,r*.92,-r*.39,r*.72); ctx.quadraticCurveTo(-r*.55,-r*.28,0,-r*1.2); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#3b4657";
+        ctx.fillRect(-r*.39,r*.43,r*.78,r*.14);
+        ctx.fillStyle = cor;
+        poligono(ctx,[[-r*.25,-r*.94],[0,-r*1.2],[r*.25,-r*.94]],true,false);
         const janela = ctx.createRadialGradient(-r*.08,-r*.34,r*.03,0,-r*.3,r*.31);
         janela.addColorStop(0, "#eaffff"); janela.addColorStop(.5, "#68c7ee"); janela.addColorStop(1, "#17364f");
         ctx.fillStyle = janela;
         ctx.beginPath(); ctx.arc(0, -r*.3, r*.28, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,.88)";
+        ctx.beginPath(); ctx.arc(-r*.09,-r*.39,r*.07,0,Math.PI*2); ctx.fill();
         ctx.strokeStyle = "rgba(255,255,255,.72)"; ctx.lineWidth = Math.max(r*.045,1);
         ctx.beginPath(); ctx.moveTo(-r*.12,-r*.94); ctx.quadraticCurveTo(-r*.3,-r*.2,-r*.2,r*.48); ctx.stroke();
       },
@@ -1275,18 +1320,25 @@
     gl.attachShader(programa, compilar(gl.VERTEX_SHADER, `
       attribute vec3 aPos; attribute vec3 aNormal; attribute vec3 aColor;
       uniform vec2 uViewport; uniform vec2 uCenter; uniform float uScale;
-      uniform vec3 uRot; varying vec3 vColor;
+      uniform vec3 uRot; uniform float uTime; uniform float uKind; varying vec3 vColor;
       vec3 giroX(vec3 p, float a){ float c=cos(a),s=sin(a); return vec3(p.x,p.y*c-p.z*s,p.y*s+p.z*c); }
       vec3 giroY(vec3 p, float a){ float c=cos(a),s=sin(a); return vec3(p.x*c+p.z*s,p.y,-p.x*s+p.z*c); }
       vec3 giroZ(vec3 p, float a){ float c=cos(a),s=sin(a); return vec3(p.x*c-p.y*s,p.x*s+p.y*c,p.z); }
       void main(){
-        vec3 p=giroZ(giroX(giroY(aPos,uRot.y),uRot.x),uRot.z);
+        vec3 modelo=aPos;
+        if(uKind>.5 && uKind<1.5 && modelo.y<-.42){
+          float mascara=clamp((-modelo.y-.42)/1.15,0.0,1.0);
+          float pulso=sin(uTime*22.0+modelo.x*5.0)*.075*mascara;
+          modelo.y-=pulso; modelo.x*=1.0+pulso*.18;
+        }
+        vec3 p=giroZ(giroX(giroY(modelo,uRot.y),uRot.x),uRot.z);
         vec3 n=normalize(giroZ(giroX(giroY(aNormal,uRot.y),uRot.x),uRot.z));
         float perspectiva=7.0/(7.0+p.z);
         vec2 tela=uCenter+vec2(p.x,-p.y)*uScale*perspectiva;
         gl_Position=vec4(tela.x/uViewport.x*2.0-1.0,1.0-tela.y/uViewport.y*2.0,p.z/12.0,1.0);
-        float luz=.34+max(dot(n,normalize(vec3(-.45,.8,-.6))),0.0)*.66;
-        vColor=aColor*luz;
+        float luz=.32+max(dot(n,normalize(vec3(-.45,.8,-.6))),0.0)*.68;
+        float recorte=pow(1.0-abs(n.z),3.0)*.08;
+        vColor=min(aColor*luz+recorte,vec3(1.0));
       }`));
     gl.attachShader(programa, compilar(gl.FRAGMENT_SHADER, `
       precision mediump float; varying vec3 vColor;
@@ -1298,6 +1350,7 @@
     const locais = {
       pos: gl.getAttribLocation(programa, "aPos"), normal: gl.getAttribLocation(programa, "aNormal"), cor: gl.getAttribLocation(programa, "aColor"),
       viewport: gl.getUniformLocation(programa, "uViewport"), centro: gl.getUniformLocation(programa, "uCenter"), escala: gl.getUniformLocation(programa, "uScale"), rot: gl.getUniformLocation(programa, "uRot"),
+      tempo: gl.getUniformLocation(programa, "uTime"), tipo: gl.getUniformLocation(programa, "uKind"),
     };
     const rgb = (hex) => {
       const h = String(hex || "#ffc23d").replace("#", "");
@@ -1338,33 +1391,82 @@
           if(raioTopo>0) tri([x,y1,z],p3,p2,[0,1,0],cor);
         }
       };
+      const cilindroX = (x,y,z,raio,comprimento,lados,cor,raioPonta=raio) => {
+        const x0=x-comprimento/2,x1=x+comprimento/2;
+        for(let i=0;i<lados;i++){
+          const a=i*Math.PI*2/lados,b=(i+1)*Math.PI*2/lados;
+          const p0=[x0,y+Math.cos(a)*raio,z+Math.sin(a)*raio],p1=[x0,y+Math.cos(b)*raio,z+Math.sin(b)*raio];
+          const p2=[x1,y+Math.cos(b)*raioPonta,z+Math.sin(b)*raioPonta],p3=[x1,y+Math.cos(a)*raioPonta,z+Math.sin(a)*raioPonta];
+          quad(p0,p1,p2,p3,[0,Math.cos((a+b)/2),Math.sin((a+b)/2)],cor);
+          tri([x0,y,z],p1,p0,[-1,0,0],cor); tri([x1,y,z],p3,p2,[1,0,0],cor);
+        }
+      };
+      const cilindroZ = (x,y,z,raio,comprimento,lados,cor) => {
+        const z0=z-comprimento/2,z1=z+comprimento/2;
+        for(let i=0;i<lados;i++){
+          const a=i*Math.PI*2/lados,b=(i+1)*Math.PI*2/lados;
+          const p0=[x+Math.cos(a)*raio,y+Math.sin(a)*raio,z0],p1=[x+Math.cos(b)*raio,y+Math.sin(b)*raio,z0];
+          const p2=[x+Math.cos(b)*raio,y+Math.sin(b)*raio,z1],p3=[x+Math.cos(a)*raio,y+Math.sin(a)*raio,z1];
+          quad(p0,p1,p2,p3,[Math.cos((a+b)/2),Math.sin((a+b)/2),0],cor);
+          tri([x,y,z0],p0,p1,[0,0,-1],cor); tri([x,y,z1],p2,p3,[0,0,1],cor);
+        }
+      };
       const base = rgb(corHex), escuro = misturar(base,[.03,.05,.09],.58), claro = misturar(base,[1,1,1],.34);
 
       if (tipo === "carro") {
-        const preto=[.025,.035,.055], vidro=[.16,.52,.72], vermelho=[1,.06,.09], metal=[.62,.68,.75];
-        caixa(0,.48,0,2.55,.58,3.45,base);
-        caixa(0,.82,.12,2.2,.32,2.9,claro);
-        caixa(0,1.18,.16,1.65,.72,1.72,escuro);
-        caixa(0,1.25,-.72,1.42,.48,.07,vidro);
-        caixa(0,1.55,.2,1.35,.08,1.26,claro);
-        for(const s of [-1,1]) for(const z of [-1.08,1.08]) caixa(s*1.23,.36,z,.4,.68,.76,preto);
-        caixa(0,.46,-1.77,2.34,.2,.16,escuro);
-        for(const s of [-1,1]) caixa(s*.72,.67,-1.8,.48,.25,.09,vermelho);
-        caixa(0,1.13,-1.62,2.55,.12,.36,escuro);
-        for(const s of [-1,1]) caixa(s*.82,.94,-1.58,.11,.4,.11,metal);
-        caixa(0,.42,-1.9,.82,.14,.08,metal);
-      } else if (tipo === "foguete") {
-        const metal=[.78,.84,.9], vidro=[.12,.62,.86], vermelho=[.95,.08,.16], fogo=[1,.42,.02], fogo2=[1,.92,.18];
-        cilindroY(0,1.55,0,.68,2.85,10,metal,.57);
-        cilindroY(0,3.46,0,.57,1.18,10,base,0);
-        cilindroY(0,1.98,-.64,.29,.12,10,vidro,.29);
-        for(const s of [-1,1]) {
-          const n=[s,0,-.15]; tri([s*.5,.65,-.05],[s*1.2,-.05,.1],[s*.52,-.05,.12],n,vermelho);
-          tri([s*.5,.65,-.05],[s*.52,-.05,.12],[s*.5,.6,.42],n,vermelho);
+        const preto=[.018,.025,.04], pneu=[.025,.028,.035], vidro=[.08,.38,.58], vermelho=[1,.035,.07], metal=[.62,.69,.76], branco=[.92,.97,1];
+        // Chassi baixo e largo, com nariz mais estreito e volumes separados.
+        caixa(0,.42,0,2.62,.52,3.5,escuro);
+        caixa(0,.7,-.05,2.38,.34,3.12,base);
+        caixa(0,.84,.86,2.08,.22,1.08,claro);
+        caixa(0,.91,-1.08,2.28,.28,.82,base);
+        caixa(0,.73,-1.58,2.32,.58,.34,base);
+
+        // Cabine envidraçada e teto com faixa de corrida.
+        caixa(0,1.22,.02,1.58,.72,1.62,escuro);
+        caixa(0,1.25,-.8,1.38,.48,.055,vidro);
+        for(const s of [-1,1]) caixa(s*.79,1.23,.02,.055,.43,1.24,vidro);
+        caixa(0,1.62,.03,1.42,.09,1.18,claro);
+        caixa(0,1.675,.03,.2,.035,1.2,branco);
+
+        // Rodas de verdade: pneus cilíndricos e cubos metálicos.
+        for(const s of [-1,1]) for(const z of [-1.08,1.08]) {
+          cilindroX(s*1.23,.36,z,.43,.48,10,pneu);
+          cilindroX(s*1.46,.36,z,.2,.055,10,metal);
         }
-        caixa(0,.05,0,.72,.2,.72,escuro);
-        cilindroY(0,-.58,0,.34,1.1,8,fogo,0);
-        cilindroY(0,-.72,0,.16,.9,8,fogo2,0);
+
+        // Traseira GT: difusor, lanternas, escapamentos e aerofólio elevado.
+        caixa(0,.39,-1.79,2.42,.23,.18,preto);
+        for(const s of [-1,1]) {
+          caixa(s*.71,.7,-1.82,.55,.22,.07,vermelho);
+          caixa(s*.84,1.1,-1.6,.1,.48,.1,metal);
+          cilindroZ(s*.58,.3,-1.91,.105,.24,10,metal);
+        }
+        caixa(0,1.3,-1.64,2.58,.12,.42,escuro);
+        caixa(0,1.35,-1.69,1.94,.045,.45,base);
+        caixa(0,.53,-1.91,.72,.1,.065,metal);
+        // Faróis dianteiros ainda aparecem nas curvas e reforçam o volume.
+        for(const s of [-1,1]) caixa(s*.72,.86,1.59,.48,.13,.055,branco);
+      } else if (tipo === "foguete") {
+        const metal=[.78,.84,.9], metalEscuro=[.28,.34,.42], vidro=[.08,.58,.86], vermelho=[.95,.06,.14], fogo=[1,.3,.015], fogo2=[1,.92,.2], branco=[.94,.98,1];
+        // Corpo segmentado, com anéis e ponta colorida — legível mesmo pequeno.
+        cilindroY(0,1.48,0,.7,2.9,12,metal,.61);
+        cilindroY(0,2.9,0,.64,.16,12,metalEscuro,.64);
+        cilindroY(0,3.54,0,.62,1.22,12,base,0);
+        cilindroY(0,.3,0,.75,.18,12,metalEscuro,.75);
+        cilindroZ(0,1.86,-.68,.31,.13,12,metalEscuro);
+        cilindroZ(0,1.86,-.76,.23,.06,12,vidro);
+        cilindroZ(-.075,1.94,-.8,.07,.025,8,branco);
+        for(const s of [-1,1]) {
+          const n=[s,0,-.12];
+          tri([s*.52,.9,-.08],[s*1.26,-.02,.08],[s*.5,.2,.14],n,vermelho);
+          tri([s*.52,.9,-.08],[s*.5,.2,.14],[s*.5,.76,.48],n,vermelho);
+          cilindroY(s*.67,.33,.18,.18,.86,8,metalEscuro,.16);
+          cilindroY(s*.67,-.34,.18,0,.62,8,fogo,.13);
+        }
+        cilindroY(0,-.02,0,.47,.48,10,metalEscuro,.38);
+        cilindroY(0,-.78,0,0,1.25,10,fogo,.32);
+        cilindroY(0,-.69,-.03,0,.92,8,fogo2,.15);
       } else {
         // Cápsula original de pista: núcleo octaédrico e dois anéis orbitais.
         // Não imita a caixa visual de nenhuma franquia; só mantém a surpresa.
@@ -1407,7 +1509,7 @@
         gl.uniform2f(locais.viewport,cv3d.width,cv3d.height); gl.uniform2f(locais.centro,centroX*dpr,baseY*dpr); gl.uniform1f(locais.escala,escala*dpr);
         const flutua=tipo==="foguete" && !semMovimento ? Math.sin(t*3)*.045 : 0;
         const rotacao = tipo==="powerup" ? [t*.72,t*1.45,t*.38] : [-.22+flutua,(tipo==="foguete"?.24:.06)+alinhamento-inclinacao*1.7,inclinacao*.72];
-        gl.uniform3f(locais.rot,...rotacao);
+        gl.uniform3f(locais.rot,...rotacao); gl.uniform1f(locais.tempo,t); gl.uniform1f(locais.tipo,tipo==="foguete"?1:tipo==="powerup"?2:0);
         gl.drawArrays(gl.TRIANGLES,0,m.vertices);
       },
       };
@@ -1746,7 +1848,14 @@
 
     if (tipo3d && Render3D.disponivel) {
       const alinhamentoPista = -(p.x - L / 2) / L * 1.15;
-      Render3D.desenhar(tipo3d, p.x, p.y - salto, r * (tipo3d === "carro" ? .94 : .86), jogador.inclinacao, t, S.portoes[0], alinhamentoPista);
+      if (tipo3d === "foguete") {
+        const pulso = semMovimento ? .82 : .72 + Math.abs(Math.sin(t * 22)) * .34;
+        const chama = ctx.createRadialGradient(p.x,p.y+r*.48,0,p.x,p.y+r*.62,r*1.18*pulso);
+        chama.addColorStop(0,"rgba(255,250,188,.9)"); chama.addColorStop(.22,"rgba(255,178,38,.72)"); chama.addColorStop(.62,"rgba(255,70,35,.2)"); chama.addColorStop(1,"rgba(255,70,35,0)");
+        ctx.save(); ctx.globalCompositeOperation="screen"; ctx.fillStyle=chama;
+        ctx.beginPath(); ctx.ellipse(p.x,p.y+r*.68,r*.62*pulso,r*1.08*pulso,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+      }
+      Render3D.desenhar(tipo3d, p.x, p.y - salto, r * (tipo3d === "carro" ? 1.02 : .9), jogador.inclinacao, t, S.portoes[0], alinhamentoPista);
     } else {
       ctx.save();
       ctx.translate(p.x, p.y - r - salto);
@@ -1826,6 +1935,28 @@
 
   const el = (id) => document.getElementById(id);
   const painel = el("painel"), cockpitHud = el("cockpit-hud"), canto = el("canto"), dano = el("dano");
+  const velocimetro = el("f-vel");
+  let velocidadeHudExibida = CFG.VEL_BASE / 40;
+
+  // O mostrador usa exatamente a velocidade que avança o jogador. A divisão
+  // apenas converte as unidades internas em uma escala de 0–160 km/h fácil de
+  // ler; a interpolação deixa o ponteiro físico, sem atrasar o valor real.
+  function atualizarVelocimetro(dt = .016, imediato = false) {
+    const alvo = Math.min(velocidade() / 40, 160);
+    const passo = imediato ? 1 : 1 - Math.exp(-Math.max(dt, 0) * 9);
+    velocidadeHudExibida += (alvo - velocidadeHudExibida) * passo;
+    const leitura = Math.round(velocidadeHudExibida);
+    const progresso = Math.min(Math.max(velocidadeHudExibida / 160, 0), 1);
+    const lento = jogo.portao <= jogo.lentoAte;
+    const cor = lento ? PODERES.lento.cor : leitura >= 145 ? S.ruim : leitura >= 125 ? "#ffb52e" : "var(--marca)";
+
+    el("v-vel").textContent = leitura;
+    velocimetro.setAttribute("aria-valuenow", String(leitura));
+    velocimetro.setAttribute("aria-valuetext", `${leitura} quilômetros por hora`);
+    velocimetro.classList.toggle("acelerando", leitura >= 120 || lento);
+    cockpitHud.style.setProperty("--vel-giro", `${-128 + progresso * 256}deg`);
+    cockpitHud.style.setProperty("--vel-cor", cor);
+  }
   const elVidas = el("vidas"), fVidas = el("f-vidas");
   const flash = el("flash"), flashConta = el("flash-conta"), flashNota = el("flash-nota");
   const flashSinal = el("flash-sinal"), flashTitulo = el("flash-titulo");
@@ -1875,13 +2006,6 @@
     itemAcessivel.textContent = itemAtual && !itemAtual.pego
       ? `Cápsula surpresa na pista ${itemAtual.faixa + 1}.`
       : "";
-
-    const razao = razaoVel();
-    const fatorLento = jogo.portao <= jogo.lentoAte ? .6 : 1;
-    const velocidadeHud = Math.round(60 + razao * 90 * fatorLento);
-    el("v-vel").textContent = velocidadeHud;
-    el("f-vel").setAttribute("aria-valuenow", String(velocidadeHud));
-    cockpitHud.style.setProperty("--vel-giro", `${-116 + Math.min(Math.max((velocidadeHud - 60) / 90, 0), 1) * 232}deg`);
 
     const ativo =
       jogo.escudo ? "escudo" :
@@ -2030,6 +2154,7 @@
       tempoJogo += dt;
       jogador.z += velocidade() * dt;
       Audio.motorEm(razaoVel());
+      atualizarVelocimetro(dt);
 
       const antes = jogador.x;
       jogador.x += (faixaX(jogador.faixa) - jogador.x) * Math.min(dt * 9, 1);
@@ -2095,6 +2220,8 @@
     telaMenu.hidden = true; telaFim.hidden = true; telaPausa.hidden = true;
     painel.hidden = false; cockpitHud.hidden = false; canto.hidden = false; perguntaFixa.hidden = false; el("quiz-acessivel").hidden = false;
     painel.classList.add("ativo"); cockpitHud.classList.add("ativo"); canto.classList.add("ativo");
+    velocidadeHudExibida = velocidade() / 40;
+    atualizarVelocimetro(.016, true);
     limparFlash();
     pintarPainel(false);
     perguntaFixa.classList.add("ativo"); perguntaFixa.setAttribute("aria-hidden", "false");
