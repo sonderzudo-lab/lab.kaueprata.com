@@ -1,4 +1,4 @@
-# apps.kaueprata.com
+# lab.kaueprata.com
 
 Galeria de aplicativos, jogos e exercícios de Kauê Prata. O hub e os projetos
 publicados nele usam HTML, CSS e JavaScript puros, sem etapa de build.
@@ -17,7 +17,7 @@ Abra `http://localhost:8123`.
 2. Coloque o app dentro dela, com `index.html` como entrada.
 3. Use caminhos relativos dentro do app, como `./style.css` e `./script.js`.
 4. Adicione o projeto em `assets/apps.js`.
-5. Faça commit e push. A URL será `https://apps.kaueprata.com/calculadora/`.
+5. Faça commit e push. A URL será `https://lab.kaueprata.com/calculadora/`.
 
 O arquivo `assets/apps.js` é a fonte da lista exibida na página inicial.
 
