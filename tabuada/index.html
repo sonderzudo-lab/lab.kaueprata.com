@@ -30,6 +30,8 @@
     overflow: hidden; -webkit-tap-highlight-color: transparent;
   }
   #palco { position: relative; width: 100%; height: 100%; touch-action: none; }
+  #palco.em-jogo canvas#pista { cursor: grab; }
+  #palco.arrastando canvas#pista { cursor: grabbing; }
   canvas#pista { display: block; width: 100%; height: 100%; }
   canvas#corredor3d { position: absolute; z-index: 2; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
   canvas#corredor3d[hidden] { display: none; }
@@ -72,7 +74,7 @@
   /* Instrumentos de corrida: velocidade e vidas ficam perto do carro, no
      canto inferior esquerdo, em vez de disputarem atenção com o progresso. */
   #cockpit-hud {
-    --vel-giro: -128deg; --vel-cor: var(--marca); position: absolute; z-index: 4;
+    --vel-giro: -160deg; --vel-cor: var(--marca); position: absolute; z-index: 4;
     left: clamp(10px, 2.4vw, 22px); bottom: max(clamp(10px, 2.4vw, 22px), env(safe-area-inset-bottom));
     display: flex; align-items: flex-end; gap: 10px; opacity: 0; pointer-events: none;
     transition: opacity .25s;
@@ -371,7 +373,15 @@
   #flash[data-tipo="acerto"] { --flash-cor: var(--bom); }
   #flash[data-tipo="erro"] { --flash-cor: var(--ruim); }
   #flash[data-tipo="poder"], #flash[data-tipo="escudo"] { --flash-cor: var(--marca); }
-  #flash[data-tipo="roleta"] { --flash-cor: #58e6ff; }
+  #flash[data-tipo="roleta"] {
+    --flash-cor: #58e6ff; width: min(76vw, 370px); gap: 11px;
+    padding: 9px 20px 10px 12px; border-width: 1px;
+    box-shadow: 6px 6px 0 color-mix(in srgb, var(--flash-cor) 28%, transparent), 0 14px 38px rgba(0,0,0,.42);
+  }
+  #flash[data-tipo="roleta"] .flash-sinal { width: 46px; border-width: 2px; border-radius: 13px 6px; font-size: 27px; }
+  #flash[data-tipo="roleta"] .flash-titulo { font-size: 8px; }
+  #flash[data-tipo="roleta"] .conta { font-size: clamp(19px, 4vw, 29px); }
+  #flash[data-tipo="roleta"] .nota { margin-top: 2px; font-size: 11px; }
   #flash.visivel { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(0); }
   #flash[data-tipo="erro"].visivel { animation: flash-erro .32s ease-out; }
   @keyframes flash-erro { 25% { transform: translate(calc(-50% - 8px), 0); } 55% { transform: translate(calc(-50% + 6px), 0); } }
@@ -589,7 +599,7 @@
             <div class="resumo-partida" id="resumo-partida"></div>
             <div class="menu-actions">
               <button id="b-jogar" class="principal" type="button">Ir para a largada</button>
-              <small>← →, 1 2 3 ou toque em uma pista</small>
+              <small>arraste o corredor · ou use ← → e 1 2 3</small>
             </div>
           </aside>
         </div>
@@ -863,6 +873,14 @@
     menino: {
       nome: "Menino",
       desenhar(ctx, r, t, cor) {
+        const passo = Math.sin(t * 10);
+        contorno(ctx, r);
+        ctx.strokeStyle = "#2a2118"; ctx.lineCap = "round"; ctx.lineWidth = Math.max(r * .17, 2);
+        // Braços e pernas alternam como uma corrida, em vez de o boneco deslizar.
+        for (const s of [-1, 1]) {
+          ctx.beginPath(); ctx.moveTo(s*r*.45,r*.18); ctx.lineTo(s*r*(.75+.12*passo*s),r*(.5-.12*passo*s)); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(s*r*.28,r*.84); ctx.lineTo(s*r*(.42+.18*passo*s),r*(1.25+.08*passo*s)); ctx.stroke();
+        }
         ctx.fillStyle = cor; contorno(ctx, r);
         ctx.beginPath(); ctx.roundRect(-r * .62, r * .05, r * 1.24, r, r * .34); ctx.fill(); ctx.stroke();
         ctx.fillStyle = "#ffe0bd";
@@ -975,7 +993,8 @@
       desenhar(ctx, r, t, cor) {
         contorno(ctx, r);
         ctx.fillStyle = "#ffffff";
-        for (const s of [-1, 1]) { ctx.beginPath(); ctx.roundRect(s * r * .42 - r * .26, r * .72, r * .52, r * .3, r * .12); ctx.fill(); ctx.stroke(); }
+        const corre = Math.sin(t * 10);
+        for (const s of [-1, 1]) { ctx.beginPath(); ctx.roundRect(s * r * .42 - r * .26 + corre*s*r*.09, r * (.72 + corre*s*.09), r * .52, r * .3, r * .12); ctx.fill(); ctx.stroke(); }
         const banana = ctx.createLinearGradient(-r*.55,-r, r*.5,r*.8);
         banana.addColorStop(0, "#fff6a4"); banana.addColorStop(.38, "#ffd93b"); banana.addColorStop(1, "#bd7f13");
         ctx.fillStyle = banana;
@@ -1157,6 +1176,7 @@
       },
       clique() { sfx(620, .07, "square", .1, 880); },
       mover()  { sfx(320, .09, "triangle", .09, 540); },
+      roleta(passo) { sfx(440 + (passo % 4) * 95, .045, "square", .045, null); },
       acerto() { [523, 659, 784].forEach((f, i) => sfx(f, .13, "triangle", .13, null, i * .065)); },
       poder()  { [784, 988, 1319].forEach((f, i) => sfx(f, .1, "square", .1, null, i * .05)); },
       vidaPerdida() { sfx(300, .45, "sawtooth", .16, 90); sfx(180, .5, "square", .1, 70, .04); },
@@ -1242,8 +1262,9 @@
     vidas: 3, escudo: false, dobroAte: 0, lentoAte: 0,
     concluiu: false, errosDetalhes: new Map(),
   };
-  const jogador = { z: 0, faixa: 1, x: 0, inclinacao: 0 };
+  const jogador = { z: 0, faixa: 1, x: 0, inclinacao: 0, arrastando: false };
   let camX = 0, travaPortao = 0, tremor = 0, poeira = [], tempoJogo = 0;
+  let hitJogador = { x: 0, topo: 0, base: 0, raio: 0 };
   let itens = new Map();   // índice do portão -> item ou null
 
   const modoAtual = () => MODOS[dados.modo] || MODOS.normal;
@@ -1267,13 +1288,19 @@
       if (i > 1 && Math.random() < CFG.CHANCE_ITEM) {
         const opcoes = ["escudo", "lento", "dobro"];
         if (modoAtual().vidas !== Infinity && jogo.vidas < modoAtual().vidas + 2) opcoes.push("vida");
-        it = { premio: opcoes[Math.floor(Math.random() * opcoes.length)], faixa: Math.floor(Math.random() * CFG.PORTAS), pego: false };
+        it = {
+          premio: opcoes[Math.floor(Math.random() * opcoes.length)],
+          faixa: Math.floor(Math.random() * CFG.PORTAS),
+          // Varia dentro do trecho para não aparecer sempre no ponto médio.
+          distanciaDoPortao: .26 + Math.random() * .5,
+          pego: false,
+        };
       }
       itens.set(i, it);
     }
     return itens.get(i);
   }
-  const zDoItem = (i) => zDoPortao(i) - CFG.VAO * 0.5;
+  const zDoItem = (i) => zDoPortao(i) - CFG.VAO * (itemDo(i)?.distanciaDoPortao ?? .5);
 
   function reiniciar() {
     const m = modoAtual();
@@ -1285,7 +1312,7 @@
     });
     banco = new Map(); baralhosFatores = new Map(); itens = new Map();
     jogador.z = zDoPortao(1) - CFG.VAO * 0.92;
-    jogador.faixa = 1; jogador.x = faixaX(1); jogador.inclinacao = 0;
+    jogador.faixa = 1; jogador.x = faixaX(1); jogador.inclinacao = 0; jogador.arrastando = false;
     camX = 0; travaPortao = 0; tremor = 0; poeira = []; tempoJogo = 0;
   }
 
@@ -1508,7 +1535,8 @@
         const dpr=cv3d.width/L, m=malha(tipo,cor); ligar(m.buffers[0],locais.pos); ligar(m.buffers[1],locais.normal); ligar(m.buffers[2],locais.cor);
         gl.uniform2f(locais.viewport,cv3d.width,cv3d.height); gl.uniform2f(locais.centro,centroX*dpr,baseY*dpr); gl.uniform1f(locais.escala,escala*dpr);
         const flutua=tipo==="foguete" && !semMovimento ? Math.sin(t*3)*.045 : 0;
-        const rotacao = tipo==="powerup" ? [t*.72,t*1.45,t*.38] : [-.22+flutua,(tipo==="foguete"?.24:.06)+alinhamento-inclinacao*1.7,inclinacao*.72];
+        const suspensao=tipo==="carro" && !semMovimento ? Math.sin(t*17)*.014 : 0;
+        const rotacao = tipo==="powerup" ? [t*.72,t*1.45,t*.38] : [-.22+flutua+suspensao,(tipo==="foguete"?.24:.06)+alinhamento-inclinacao*1.7,inclinacao*.72];
         gl.uniform3f(locais.rot,...rotacao); gl.uniform1f(locais.tempo,t); gl.uniform1f(locais.tipo,tipo==="foguete"?1:tipo==="powerup"?2:0);
         gl.drawArrays(gl.TRIANGLES,0,m.vertices);
       },
@@ -1827,12 +1855,16 @@
   /* --------------------------------------------------------- jogador -- */
 
   function desenharJogador(camZ, t) {
-    if (estado !== "jogando" && estado !== "concluindo") return;
+    if (estado !== "jogando" && estado !== "concluindo") {
+      hitJogador.raio = 0;
+      return;
+    }
     const p = projetar(jogador.x, 0, camZ + CFG.JOGADOR_A_FRENTE, camZ);
     if (!p) return;
     const r = p.escala * 155 * A / 2;
     const tipo3d = (dados.corredor === "carro" || dados.corredor === "foguete") ? dados.corredor : null;
     const salto = semMovimento ? 0 : Math.abs(Math.sin(t * 9)) * r * (tipo3d ? .055 : .3);
+    hitJogador = { x: p.x, topo: p.y - r * (tipo3d === "foguete" ? 3.8 : 2.4), base: p.y + r * 1.2, raio: r * 1.55 };
 
     ctx.fillStyle = "rgba(0,0,0,.28)";
     ctx.beginPath(); ctx.ellipse(p.x, p.y, r * .95, r * .3, 0, 0, Math.PI * 2); ctx.fill();
@@ -1859,7 +1891,9 @@
     } else {
       ctx.save();
       ctx.translate(p.x, p.y - r - salto);
-      ctx.rotate(jogador.inclinacao);
+      const corrida = semMovimento ? 0 : Math.sin(t * 10);
+      ctx.rotate(jogador.inclinacao + corrida * .025);
+      ctx.scale(1 + Math.abs(corrida) * .025, 1 - Math.abs(corrida) * .035);
       (CORREDORES[dados.corredor] || CORREDORES.menino).desenhar(ctx, r, t, S.portoes[0]);
       ctx.restore();
     }
@@ -1954,7 +1988,9 @@
     velocimetro.setAttribute("aria-valuenow", String(leitura));
     velocimetro.setAttribute("aria-valuetext", `${leitura} quilômetros por hora`);
     velocimetro.classList.toggle("acelerando", leitura >= 120 || lento);
-    cockpitHud.style.setProperty("--vel-giro", `${-128 + progresso * 256}deg`);
+    // Os extremos seguem a escala impressa: 0 à esquerda, 80 no topo e
+    // 160 à direita. Assim número e ponteiro ocupam a mesma posição física.
+    cockpitHud.style.setProperty("--vel-giro", `${-160 + progresso * 140}deg`);
     cockpitHud.style.setProperty("--vel-cor", cor);
   }
   const elVidas = el("vidas"), fVidas = el("f-vidas");
@@ -2074,8 +2110,31 @@
     it.pego = true;
     const minhaRoleta = ++roletaPoder;
     Audio.poder(); soltarPoeira("#58e6ff", 16);
-    mostrarFlash("?", "Sorteando sua vantagem…", "#58e6ff", .48, "roleta");
-    setTimeout(() => { if (minhaRoleta === roletaPoder) aplicarPoder(it.premio); }, 420);
+    mostrarFlash("?", "Roleta de vantagens", "#58e6ff", 1.5, "roleta");
+
+    // Passa várias vezes pelos itens, desacelerando antes de revelar o prêmio.
+    // O resultado continua decidido na criação da cápsula, sem trocar no meio.
+    const chaves = Object.keys(PODERES);
+    let passo = 0;
+    const total = 10;
+    const girar = () => {
+      if (minhaRoleta !== roletaPoder || estado === "menu" || estado === "fim") return;
+      if (passo >= total) {
+        setTimeout(() => { if (minhaRoleta === roletaPoder) aplicarPoder(it.premio); }, 100);
+        return;
+      }
+      const chave = chaves[(passo + i) % chaves.length];
+      const poder = PODERES[chave];
+      flashSinal.textContent = poder.simbolo;
+      flashConta.textContent = poder.nome;
+      flashNota.textContent = "Sorteando…";
+      flash.style.setProperty("--flash-cor", poder.cor);
+      Audio.roleta(passo);
+      const espera = 52 + passo * 10;
+      passo++;
+      setTimeout(girar, espera);
+    };
+    girar();
   }
 
   function avaliar(i) {
@@ -2157,7 +2216,7 @@
       atualizarVelocimetro(dt);
 
       const antes = jogador.x;
-      jogador.x += (faixaX(jogador.faixa) - jogador.x) * Math.min(dt * 9, 1);
+      if (!jogador.arrastando) jogador.x += (faixaX(jogador.faixa) - jogador.x) * Math.min(dt * 9, 1);
       const desl = (jogador.x - antes) / Math.max(dt, .001);
       const alvoInc = Math.max(-.3, Math.min(.3, -desl / 9000));
       jogador.inclinacao += (alvoInc - jogador.inclinacao) * Math.min(dt * 8, 1);
@@ -2202,6 +2261,7 @@
 
   function irParaMenu() {
     estado = "menu"; emJogo = false;
+    palco.classList.remove("em-jogo", "arrastando"); jogador.arrastando = false;
     cv3d.hidden = true; Render3D.limpar();
     Audio.pararMotor(); Audio.pararMusica();
     telaMenu.hidden = false; telaFim.hidden = true; telaPausa.hidden = true;
@@ -2216,6 +2276,7 @@
   function jogar() {
     reiniciar();
     estado = "jogando"; emJogo = true;
+    palco.classList.add("em-jogo"); palco.classList.remove("arrastando");
     cv3d.hidden = false;
     telaMenu.hidden = true; telaFim.hidden = true; telaPausa.hidden = true;
     painel.hidden = false; cockpitHud.hidden = false; canto.hidden = false; perguntaFixa.hidden = false; el("quiz-acessivel").hidden = false;
@@ -2232,6 +2293,7 @@
   function pausar() {
     if (estado !== "jogando") return;
     estado = "pausado";
+    palco.classList.remove("arrastando"); jogador.arrastando = false;
     cv3d.hidden = true; Render3D.limpar();
     Audio.pararMotor(); Audio.pararMusica();
     telaPausa.hidden = false;
@@ -2244,6 +2306,7 @@
     if (estado !== "pausado") return;
     telaPausa.hidden = true;
     estado = "jogando";
+    palco.classList.add("em-jogo");
     cv3d.hidden = false;
     perguntaFixa.hidden = false; el("quiz-acessivel").hidden = false;
     perguntaFixa.classList.add("ativo");
@@ -2252,6 +2315,7 @@
 
   function terminar() {
     estado = "fim"; emJogo = false;
+    palco.classList.remove("em-jogo", "arrastando"); jogador.arrastando = false;
     cv3d.hidden = true; Render3D.limpar();
     Audio.pararMotor(); Audio.pararMusica();
     telaPausa.hidden = true;
@@ -2556,12 +2620,54 @@
     else if (ev.key === "Escape" || ev.key === "p" || ev.key === "P") pausar();
   });
 
+  let ponteiroArrasto = null;
+
+  function xMundoDoPonteiro(clientX) {
+    const rect = palco.getBoundingClientRect();
+    // Mantém veículos largos completamente visíveis junto às bordas.
+    const telaX = Math.max(rect.width * .24, Math.min(rect.width * .76, clientX - rect.left));
+    const escalaJogador = CFG.PROF_CAMERA / CFG.JOGADOR_A_FRENTE;
+    const mundo = camX + (telaX - rect.width / 2) / (escalaJogador * rect.width / 2);
+    return Math.max(faixaX(0), Math.min(faixaX(CFG.PORTAS - 1), mundo));
+  }
+
+  function terminarArrasto(ev) {
+    if (ponteiroArrasto === null || (ev && ev.pointerId !== ponteiroArrasto)) return;
+    ponteiroArrasto = null;
+    jogador.arrastando = false;
+    palco.classList.remove("arrastando");
+    jogador.x = faixaX(jogador.faixa);
+    camX = jogador.x * .55;
+  }
+
   palco.addEventListener("pointerdown", (ev) => {
-    if (estado !== "jogando") return;
-    if (ev.target.closest?.("button")) return;
-    const r = palco.getBoundingClientRect();
-    irPara(Math.floor(((ev.clientX - r.left) / r.width) * CFG.PORTAS));
+    if (estado !== "jogando" || ev.target.closest?.("button")) return;
+    const rect = palco.getBoundingClientRect();
+    const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
+    const pegouCorredor = hitJogador.raio > 0 && Math.abs(x - hitJogador.x) <= hitJogador.raio && y >= hitJogador.topo && y <= hitJogador.base;
+    if (!pegouCorredor) return;
+    ponteiroArrasto = ev.pointerId;
+    jogador.arrastando = true;
+    palco.classList.add("arrastando");
+    palco.setPointerCapture?.(ev.pointerId);
+    ev.preventDefault();
   });
+
+  palco.addEventListener("pointermove", (ev) => {
+    if (ev.pointerId !== ponteiroArrasto || !jogador.arrastando) return;
+    const anterior = jogador.x;
+    const novoX = xMundoDoPonteiro(ev.clientX);
+    jogador.x = novoX;
+    const rect = palco.getBoundingClientRect();
+    const proporcao = Math.max(0, Math.min(.999, (ev.clientX - rect.left) / rect.width));
+    const novaFaixa = Math.floor(proporcao * CFG.PORTAS);
+    if (novaFaixa !== jogador.faixa) { jogador.faixa = novaFaixa; Audio.mover(); }
+    jogador.inclinacao = Math.max(-.34, Math.min(.34, -(novoX - anterior) / 900));
+    ev.preventDefault();
+  });
+
+  palco.addEventListener("pointerup", terminarArrasto);
+  palco.addEventListener("pointercancel", terminarArrasto);
 
   addEventListener("resize", medir);
 
