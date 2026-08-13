@@ -126,119 +126,122 @@ function cabinGeometry() {
 function createCar(color) {
   const g = new THREE.Group();
   const bodyRig = new THREE.Group(); g.add(bodyRig);
-  const paint = mat(color, { metalness: .48, roughness: .25 });
-  const paintLight = mat(tint(color, .09), { metalness: .4, roughness: .24 });
-  const paintShadow = mat(tint(color, -.105), { metalness: .42, roughness: .3 });
-  const dark = mat("#090e17", { metalness: .52, roughness: .29 });
-  const grille = mat("#1b222c", { metalness: .6, roughness: .42 });
-  const glass = mat("#0b3856", { metalness: .34, roughness: .08 });
+  const paint = mat(color, { metalness: .38, roughness: .2 });
+  const paintLight = mat(tint(color, .11), { metalness: .34, roughness: .18 });
+  const paintShadow = mat(tint(color, -.12), { metalness: .36, roughness: .28 });
+  const dark = mat("#090d12", { metalness: .34, roughness: .38 });
+  const grille = mat("#161b20", { metalness: .65, roughness: .38 });
+  const glass = mat("#a9c5d2", { metalness: .18, roughness: .08, transparent: true, opacity: .82 });
   const rubber = mat("#080b10", { roughness: .95 });
-  const metal = mat("#b9c4cf", { metalness: .92, roughness: .14 });
-  const brakeMetal = mat("#5f6872", { metalness: .94, roughness: .32 });
-  const caliper = mat("#ffb21c", { metalness: .38, roughness: .24 });
-  const red = mat("#ff2448", { emissive: "#b2082d", roughness: .16 });
-  const redHot = mat("#ff6b7e", { emissive: "#ff183f", roughness: .12 });
-  const white = mat("#f1fbff", { emissive: "#789aa9", roughness: .14 });
+  const chrome = mat("#dce4e8", { metalness: .96, roughness: .1 });
+  const chromeDark = mat("#879198", { metalness: .94, roughness: .2 });
+  const cream = mat("#eee5d4", { roughness: .46 });
+  const softTop = mat("#b69a82", { roughness: .78 });
+  const red = mat("#ff3045", { emissive: "#a2081e", roughness: .14 });
+  const amber = mat("#ffc25b", { emissive: "#a85500", roughness: .18 });
+  const white = mat("#f5fbff", { emissive: "#718995", roughness: .12 });
 
-  // Plataforma baixa, larga e em cunha: a leitura agora é de supercarro,
-  // não de um sedã feito de caixas empilhadas.
-  mesh(boxGeo, dark, [0, .17, -.02], [2.24, .14, 3.42], bodyRig);
+  // Roadster clássico: capô comprido, cabine recuada e traseira curta. A
+  // carroceria é um único loft arredondado por quatro para-lamas esculpidos.
+  mesh(boxGeo, dark, [0, .16, .04], [1.76, .11, 3.25], bodyRig);
   mesh(loftGeometry([
-    [-1.72, .98, .23, .58], [-1.38, 1.13, .22, .78],
-    [-.62, 1.18, .21, .76], [.35, 1.08, .21, .64],
-    [1.2, .88, .2, .46], [1.72, .58, .2, .34],
+    [-1.66, .56, .22, .42], [-1.48, .86, .22, .62],
+    [-1.04, .98, .2, .7], [-.32, .98, .2, .62],
+    [.52, .92, .19, .57], [1.25, .82, .18, .52],
+    [1.72, .48, .2, .4],
   ]), paint, [0, 0, 0], [1, 1, 1], bodyRig);
 
-  // Ombros traseiros e para-lamas dianteiros arredondados quebram a
-  // silhueta retangular e refletem a luz ao mudar de faixa.
+  // Os volumes laterais reproduzem os para-lamas altos e arredondados da
+  // referência, além da cintura baixa no centro do carro.
   for (const side of [-1, 1]) {
-    roundedBody(paintLight, [side * .78, .57, -.83], [.46, .25, .78], bodyRig);
-    roundedBody(paint, [side * .7, .43, .86], [.38, .17, .65], bodyRig);
-  }
-  mesh(cabinGeometry(), glass, [0, 0, 0], [1, 1, 1], bodyRig);
-  mesh(boxGeo, dark, [0, 1.255, -.13], [.96, .035, .54], bodyRig);
-  const engineGlass = roundedBody(glass, [0, .81, -1.02], [.61, .045, .39], bodyRig);
-  engineGlass.rotation.x = -.11;
-  // Plenum e coletores ficam visíveis sob a tampa do motor.
-  for (const x of [-.36, -.12, .12, .36]) {
-    const intake = mesh(new THREE.CylinderGeometry(.065, .065, .42, 10), metal, [x, .79, -1.02], [1, 1, 1], bodyRig, false);
-    intake.rotation.x = Math.PI / 2;
-  }
-  mesh(boxGeo, dark, [0, .77, -.99], [.24, .1, .46], bodyRig, false);
-  for (const x of [-.45, -.15, .15, .45]) {
-    const louver = mesh(boxGeo, dark, [x, .855, -.99], [.035, .035, .54], bodyRig, false);
-    louver.rotation.x = -.11;
-  }
-  // Entradas de ar laterais profundas, acompanhando os ombros traseiros.
-  for (const side of [-1, 1]) {
-    const intake = mesh(boxGeo, dark, [side * 1.055, .49, -.26], [.055, .27, .62], bodyRig);
-    intake.rotation.z = -side * .15;
-    mesh(boxGeo, metal, [side * 1.086, .49, -.26], [.012, .19, .44], bodyRig, false);
+    roundedBody(paintLight, [side * .73, .5, -1.02], [.34, .25, .67], bodyRig);
+    roundedBody(paintLight, [side * .67, .43, 1.08], [.3, .2, .67], bodyRig);
+    const sill = mesh(new THREE.CapsuleGeometry(.045, 1.28, 4, 10), chrome, [side * .965, .3, .02], [1, 1, 1], bodyRig, false);
+    sill.rotation.x = Math.PI / 2;
   }
 
-  // Traseira limpa com faixa de LED contínua, difusor profundo e escapamento
-  // central duplo — os elementos que mais aparecem durante a corrida.
+  // Capô com nervura central e duas linhas cromadas discretas.
+  const hood = roundedBody(paintLight, [0, .56, .9], [.68, .08, .82], bodyRig);
+  hood.rotation.x = -.035;
   for (const side of [-1, 1]) {
-    roundedBody(paintShadow, [side * .79, .45, -1.36], [.31, .2, .22], bodyRig);
-    const crease = mesh(boxGeo, dark, [side * .92, .56, -1.5], [.035, .08, .42], bodyRig, false);
-    crease.rotation.z = side * .16;
+    const hoodLine = mesh(new THREE.CapsuleGeometry(.012, .95, 3, 7), chromeDark, [side * .49, .65, .93], [1, 1, 1], bodyRig, false);
+    hoodLine.rotation.x = Math.PI / 2;
   }
-  mesh(boxGeo, dark, [0, .43, -1.735], [1.88, .3, .055], bodyRig);
-  mesh(boxGeo, grille, [0, .75, -1.748], [1.18, .14, .035], bodyRig, false);
-  for (let x = -.5; x <= .5; x += .1) {
-    mesh(sphereGeo, dark, [x, .75, -1.774], [.018, .018, .009], bodyRig, false);
-  }
-  mesh(boxGeo, red, [0, .59, -1.77], [1.58, .055, .026], bodyRig, false);
-  for (let i = -6; i <= 6; i++) {
-    mesh(boxGeo, redHot, [i * .115, .592, -1.788], [.045, .026, .012], bodyRig, false);
-  }
-  for (const x of [-.84, .84]) mesh(boxGeo, red, [x, .55, -1.77], [.12, .13, .026], bodyRig, false);
-  const badge = mesh(new THREE.OctahedronGeometry(.055, 0), metal, [0, .84, -1.778], [1, .7, .35], bodyRig, false);
-  badge.rotation.z = Math.PI / 4;
-  mesh(boxGeo, dark, [0, .15, -1.79], [1.96, .2, .23], bodyRig);
-  for (const x of [-.68, -.34, 0, .34, .68]) mesh(boxGeo, dark, [x, .17, -1.91], [.035, .2, .3], bodyRig);
-  for (const x of [-.2, .2]) {
-    const exhaust = mesh(new THREE.CylinderGeometry(.09, .09, .18, 14), metal, [x, .29, -1.82], [1, 1, 1], bodyRig);
-    exhaust.rotation.x = Math.PI / 2;
-    const hollow = mesh(new THREE.CylinderGeometry(.055, .055, .025, 14), dark, [x, .29, -1.923], [1, 1, 1], bodyRig, false);
-    hollow.rotation.x = Math.PI / 2;
-  }
-  mesh(boxGeo, dark, [0, .43, -1.79], [.5, .16, .025], bodyRig, false);
-  mesh(boxGeo, mat("#e9edf0", { metalness: .18, roughness: .5 }), [0, .43, -1.807], [.34, .09, .012], bodyRig, false);
-  for (const x of [-.78, .78]) mesh(boxGeo, redHot, [x, .28, -1.84], [.18, .035, .018], bodyRig, false);
-  // Braços da suspensão aparecem discretamente sob a traseira.
-  for (const side of [-1, 1]) {
-    const arm = mesh(new THREE.CapsuleGeometry(.025, .55, 3, 8), brakeMetal, [side * .48, .22, -1.58], [1, 1, 1], bodyRig, false);
-    arm.rotation.z = side * .92; arm.rotation.x = .35;
-  }
-  for (const x of [-.56, .56]) mesh(boxGeo, white, [x, .48, 1.66], [.4, .075, .035], bodyRig, false);
+  const hoodBadge = mesh(new THREE.CylinderGeometry(.035, .035, .018, 16), chrome, [0, .66, 1.55], [1, 1, 1], bodyRig, false);
 
-  const wing = mesh(boxGeo, dark, [0, 1.02, -1.48], [1.84, .045, .2], bodyRig);
-  wing.rotation.x = -.08;
-  for (const x of [-.58, .58]) {
-    const support = mesh(boxGeo, dark, [x, .84, -1.42], [.045, .38, .08], bodyRig);
-    support.rotation.x = -.17;
-  }
+  // Capota de tecido e vidros separados para que a cabine continue legível
+  // tanto na corrida quanto no seletor de skins.
+  mesh(loftGeometry([
+    [-1.04, .51, .61, .87], [-.78, .61, .62, 1.13],
+    [-.14, .63, .62, 1.19], [.34, .69, .61, .98],
+  ]), softTop, [0, 0, 0], [1, 1, 1], bodyRig);
+  const windshield = mesh(boxGeo, glass, [0, .88, .39], [1.28, .46, .035], bodyRig, false);
+  windshield.rotation.x = -.25;
+  const rearGlass = mesh(boxGeo, glass, [0, .9, -1.055], [.76, .29, .022], bodyRig, false);
+  rearGlass.rotation.x = .18;
   for (const side of [-1, 1]) {
-    const endplate = mesh(boxGeo, dark, [side * .92, 1.02, -1.48], [.035, .18, .25], bodyRig);
-    endplate.rotation.x = -.08;
+    const pillar = mesh(new THREE.CapsuleGeometry(.022, .49, 3, 7), chrome, [side * .65, .89, .39], [1, 1, 1], bodyRig, false);
+    pillar.rotation.z = side * .11; pillar.rotation.x = -.25;
+    const mirrorStem = mesh(new THREE.CapsuleGeometry(.017, .14, 3, 7), chrome, [side * .78, .77, .31], [1, 1, 1], bodyRig, false);
+    mirrorStem.rotation.z = side * .72;
+    roundedBody(chrome, [side * .87, .81, .29], [.11, .07, .045], bodyRig);
   }
-  // Espinha aerodinâmica liga o teto à tampa do motor.
-  const spine = mesh(boxGeo, paintLight, [0, 1.02, -.59], [.045, .24, .68], bodyRig);
-  spine.rotation.x = -.28;
+
+  // Frente completa para as previews: faróis redondos, grade oval e para-
+  // choque cromado com os dois batentes verticais da referência.
+  roundedBody(grille, [0, .43, 1.69], [.48, .11, .035], bodyRig);
+  roundedBody(chrome, [0, .43, 1.675], [.56, .16, .025], bodyRig);
+  roundedBody(grille, [0, .43, 1.695], [.46, .1, .018], bodyRig, false);
+  for (const x of [-.62, .62]) {
+    const lampRim = mesh(new THREE.CylinderGeometry(.22, .22, .06, 24), chrome, [x, .58, 1.56], [1, 1, 1], bodyRig);
+    lampRim.rotation.x = Math.PI / 2;
+    const lamp = mesh(new THREE.CylinderGeometry(.17, .17, .067, 24), white, [x, .58, 1.595], [1, 1, 1], bodyRig, false);
+    lamp.rotation.x = Math.PI / 2;
+  }
+  const frontBumper = mesh(new THREE.CapsuleGeometry(.045, 1.48, 4, 12), chrome, [0, .28, 1.76], [1, 1, 1], bodyRig);
+  frontBumper.rotation.z = Math.PI / 2;
+  for (const x of [-.38, .38]) {
+    mesh(new THREE.CapsuleGeometry(.045, .27, 4, 10), chrome, [x, .37, 1.8], [1, 1, 1], bodyRig);
+  }
+  for (const x of [-.83, .83]) mesh(sphereGeo, amber, [x, .33, 1.6], [.075, .06, .035], bodyRig, false);
+
+  // A traseira recebe prioridade de detalhe por ficar voltada para a câmera:
+  // tampa abaulada, lanternas pequenas, placa, para-choque envolvente e escape.
+  roundedBody(paintShadow, [0, .5, -1.45], [.82, .22, .23], bodyRig);
+  const trunkSeam = mesh(new THREE.CapsuleGeometry(.012, .88, 3, 7), chromeDark, [0, .7, -1.43], [1, 1, 1], bodyRig, false);
+  trunkSeam.rotation.z = Math.PI / 2;
+  for (const x of [-.72, .72]) {
+    const tailRim = mesh(new THREE.CylinderGeometry(.095, .095, .045, 18), chrome, [x, .49, -1.655], [1, 1, 1], bodyRig, false);
+    tailRim.rotation.x = Math.PI / 2;
+    const tail = mesh(new THREE.CylinderGeometry(.068, .068, .052, 18), red, [x, .49, -1.681], [1, 1, 1], bodyRig, false);
+    tail.rotation.x = Math.PI / 2;
+    mesh(sphereGeo, amber, [x, .32, -1.68], [.065, .05, .025], bodyRig, false);
+  }
+  const rearBadge = mesh(new THREE.OctahedronGeometry(.04, 1), chrome, [0, .61, -1.684], [1, .62, .3], bodyRig, false);
+  rearBadge.rotation.z = Math.PI / 4;
+  mesh(boxGeo, dark, [0, .42, -1.69], [.42, .15, .018], bodyRig, false);
+  mesh(boxGeo, cream, [0, .42, -1.712], [.32, .1, .012], bodyRig, false);
+  const rearBumper = mesh(new THREE.CapsuleGeometry(.045, 1.52, 4, 12), chrome, [0, .24, -1.73], [1, 1, 1], bodyRig);
+  rearBumper.rotation.z = Math.PI / 2;
+  for (const side of [-1, 1]) {
+    const wrap = mesh(new THREE.CapsuleGeometry(.042, .31, 4, 10), chrome, [side * .83, .27, -1.59], [1, 1, 1], bodyRig);
+    wrap.rotation.x = Math.PI / 2; wrap.rotation.z = side * .2;
+  }
+  const exhaust = mesh(new THREE.CylinderGeometry(.065, .065, .24, 14), chromeDark, [.28, .12, -1.66], [1, 1, 1], bodyRig);
+  exhaust.rotation.x = Math.PI / 2;
+  const exhaustHole = mesh(new THREE.CylinderGeometry(.043, .043, .022, 14), dark, [.28, .12, -1.79], [1, 1, 1], bodyRig, false);
+  exhaustHole.rotation.x = Math.PI / 2;
 
   const wheels = [], frontWheels = [];
-  for (const side of [-1, 1]) for (const z of [-1.02, 1.08]) {
+  for (const side of [-1, 1]) for (const z of [-1.04, 1.14]) {
     const rear = z < 0;
-    const carrier = new THREE.Group(); carrier.position.set(side * (rear ? 1.08 : .98), rear ? .3 : .28, z); g.add(carrier);
-    const wheel = mesh(wheelGeo, rubber, [0, 0, 0], [rear ? 1.13 : .98, rear ? 1.13 : .98, rear ? 1.13 : .98], carrier); wheels.push(wheel);
-    mesh(brakeDiscGeo, brakeMetal, [side > 0 ? .17 : -.17, 0, 0], [1, 1, 1], carrier, false);
-    mesh(boxGeo, caliper, [side > 0 ? .195 : -.195, .08, -.19], [.04, .13, .08], carrier, false);
-    mesh(wheelHubGeo, metal, [side > 0 ? .012 : -.012, 0, 0], [1, 1, 1], carrier);
-    for (let i = 0; i < 5; i++) {
-      const spoke = mesh(boxGeo, dark, [side > 0 ? .175 : -.175, 0, 0], [.025, .04, .24], carrier, false);
-      spoke.rotation.x = i * Math.PI / 5;
-    }
+    const carrier = new THREE.Group(); carrier.position.set(side * .91, .3, z); g.add(carrier);
+    const wheel = mesh(wheelGeo, rubber, [0, 0, 0], [1.03, 1.03, 1.03], carrier); wheels.push(wheel);
+    const whitewall = mesh(new THREE.TorusGeometry(.255, .032, 8, 22), cream, [side * .168, 0, 0], [1, 1, 1], carrier, false);
+    whitewall.rotation.y = Math.PI / 2;
+    mesh(wheelHubGeo, chrome, [side * .184, 0, 0], [1.04, 1.04, 1.04], carrier);
+    const cap = mesh(sphereGeo, chromeDark, [side * .348, 0, 0], [.045, .14, .14], carrier, false);
+    cap.rotation.z = Math.PI / 2;
     if (z > 0) frontWheels.push(carrier);
   }
   g.userData = { type: "carro", wheels, frontWheels, bodyRig, wheelSpin: 0, steer: 0 };
