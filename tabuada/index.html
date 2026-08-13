@@ -33,6 +33,8 @@
   #palco.em-jogo canvas#pista { cursor: grab; }
   #palco.arrastando canvas#pista { cursor: grabbing; }
   canvas#pista { display: block; width: 100%; height: 100%; }
+  canvas#mundo3d { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
+  canvas#mundo3d[hidden] { display: none; }
   canvas#corredor3d { position: absolute; z-index: 2; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
   canvas#corredor3d[hidden] { display: none; }
 
@@ -498,6 +500,7 @@
 
 <div id="palco">
   <canvas id="pista"></canvas>
+  <canvas id="mundo3d" aria-hidden="true" hidden></canvas>
   <canvas id="corredor3d" aria-hidden="true" hidden></canvas>
   <div id="dano"></div>
 
@@ -599,7 +602,7 @@
             <div class="resumo-partida" id="resumo-partida"></div>
             <div class="menu-actions">
               <button id="b-jogar" class="principal" type="button">Ir para a largada</button>
-              <small>arraste o corredor · ou use ← → e 1 2 3</small>
+              <small>deslize a tela para os lados · ou use ← → e 1 2 3</small>
             </div>
           </aside>
         </div>
@@ -1264,7 +1267,6 @@
   };
   const jogador = { z: 0, faixa: 1, x: 0, inclinacao: 0, arrastando: false };
   let camX = 0, travaPortao = 0, tremor = 0, poeira = [], tempoJogo = 0;
-  let hitJogador = { x: 0, topo: 0, base: 0, raio: 0 };
   let itens = new Map();   // índice do portão -> item ou null
 
   const modoAtual = () => MODOS[dados.modo] || MODOS.normal;
@@ -1553,6 +1555,7 @@
     cv.width = Math.round(L * dpr); cv.height = Math.round(A * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     Render3D.medir(dpr);
+    window.CorridaCena3D?.resize();
     meioY = A * 0.46;
   }
 
@@ -1855,16 +1858,12 @@
   /* --------------------------------------------------------- jogador -- */
 
   function desenharJogador(camZ, t) {
-    if (estado !== "jogando" && estado !== "concluindo") {
-      hitJogador.raio = 0;
-      return;
-    }
+    if (estado !== "jogando" && estado !== "concluindo") return;
     const p = projetar(jogador.x, 0, camZ + CFG.JOGADOR_A_FRENTE, camZ);
     if (!p) return;
     const r = p.escala * 155 * A / 2;
     const tipo3d = (dados.corredor === "carro" || dados.corredor === "foguete") ? dados.corredor : null;
     const salto = semMovimento ? 0 : Math.abs(Math.sin(t * 9)) * r * (tipo3d ? .055 : .3);
-    hitJogador = { x: p.x, topo: p.y - r * (tipo3d === "foguete" ? 3.8 : 2.4), base: p.y + r * 1.2, raio: r * 1.55 };
 
     ctx.fillStyle = "rgba(0,0,0,.28)";
     ctx.beginPath(); ctx.ellipse(p.x, p.y, r * .95, r * .3, 0, 0, Math.PI * 2); ctx.fill();
@@ -1925,8 +1924,48 @@
 
   /* ------------------------------------------------------------ cena -- */
 
+  let ultimoTempoCena3D = 0;
   function desenharCena(t) {
     const camZ = jogador.z;
+    const cenaCompleta = window.CorridaCena3D?.ready && (estado === "jogando" || estado === "concluindo");
+    if (cenaCompleta) {
+      cv3d.hidden = true;
+      ctx.clearRect(0, 0, L, A);
+      const fundo = ctx.createLinearGradient(0, 0, 0, A);
+      fundo.addColorStop(0, T.ceuTopo); fundo.addColorStop(.48, T.ceuBaixo);
+      fundo.addColorStop(.72, T.neblina); fundo.addColorStop(1, T.chao[0]);
+      ctx.fillStyle = fundo; ctx.fillRect(0, 0, L, A);
+      if (T.estrelas) {
+        ctx.fillStyle = "rgba(255,255,255,.85)";
+        for (const e of estrelas) { ctx.beginPath(); ctx.arc(e.x * L, e.y * meioY, e.r, 0, Math.PI * 2); ctx.fill(); }
+      }
+
+      const gates = [];
+      for (let i = jogo.portao; i <= Math.min(jogo.portao + 3, totalPortoes()); i++) {
+        const q = perguntaDo(i);
+        gates.push({ index: i, z: zDoPortao(i), a: q.a, b: q.b, options: q.opcoes });
+      }
+      const atual = itemDo(Math.min(jogo.portao, totalPortoes()));
+      const skin = PISTAS[dados.pista] || PISTAS.classica;
+      const dtCena = Math.min(Math.max(t - ultimoTempoCena3D, 0), .05); ultimoTempoCena3D = t;
+      window.CorridaCena3D.render({
+        time: t, dt: dtCena, speed: velocidade() / 1000,
+        playerZ: jogador.z, playerX: jogador.x, camX,
+        inclination: jogador.inclinacao, dragging: jogador.arrastando,
+        runner: dados.corredor, runnerColor: S.portoes[0], scenario: dados.cenario,
+        gates, gateColors: S.portoes.slice(0, 3),
+        item: atual && !atual.pego && zDoItem(jogo.portao) - jogador.z <= CFG.ALCANCE_ITEM && zDoItem(jogo.portao) > jogador.z + 200
+          ? { lane: atual.faixa, z: zDoItem(jogo.portao) }
+          : null,
+        colors: {
+          road: (skin.pista || T.pista)[0], ground: T.chao[0],
+          fog: T.neblina, skyBottom: T.ceuBaixo,
+        },
+      });
+      return;
+    }
+
+    window.CorridaCena3D?.hide();
     Render3D.iniciar();
     ctx.clearRect(0, 0, L, A);
     ctx.save();
@@ -2621,19 +2660,12 @@
   });
 
   let ponteiroArrasto = null;
-
-  function xMundoDoPonteiro(clientX) {
-    const rect = palco.getBoundingClientRect();
-    // Mantém veículos largos completamente visíveis junto às bordas.
-    const telaX = Math.max(rect.width * .24, Math.min(rect.width * .76, clientX - rect.left));
-    const escalaJogador = CFG.PROF_CAMERA / CFG.JOGADOR_A_FRENTE;
-    const mundo = camX + (telaX - rect.width / 2) / (escalaJogador * rect.width / 2);
-    return Math.max(faixaX(0), Math.min(faixaX(CFG.PORTAS - 1), mundo));
-  }
+  let inicioArrasto = null;
 
   function terminarArrasto(ev) {
     if (ponteiroArrasto === null || (ev && ev.pointerId !== ponteiroArrasto)) return;
     ponteiroArrasto = null;
+    inicioArrasto = null;
     jogador.arrastando = false;
     palco.classList.remove("arrastando");
     jogador.x = faixaX(jogador.faixa);
@@ -2642,11 +2674,8 @@
 
   palco.addEventListener("pointerdown", (ev) => {
     if (estado !== "jogando" || ev.target.closest?.("button")) return;
-    const rect = palco.getBoundingClientRect();
-    const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
-    const pegouCorredor = hitJogador.raio > 0 && Math.abs(x - hitJogador.x) <= hitJogador.raio && y >= hitJogador.topo && y <= hitJogador.base;
-    if (!pegouCorredor) return;
     ponteiroArrasto = ev.pointerId;
+    inicioArrasto = { x: ev.clientX, faixa: jogador.faixa, jogadorX: jogador.x };
     jogador.arrastando = true;
     palco.classList.add("arrastando");
     palco.setPointerCapture?.(ev.pointerId);
@@ -2655,12 +2684,15 @@
 
   palco.addEventListener("pointermove", (ev) => {
     if (ev.pointerId !== ponteiroArrasto || !jogador.arrastando) return;
-    const anterior = jogador.x;
-    const novoX = xMundoDoPonteiro(ev.clientX);
-    jogador.x = novoX;
+    if (!inicioArrasto) return;
     const rect = palco.getBoundingClientRect();
-    const proporcao = Math.max(0, Math.min(.999, (ev.clientX - rect.left) / rect.width));
-    const novaFaixa = Math.floor(proporcao * CFG.PORTAS);
+    const deslocamento = ev.clientX - inicioArrasto.x;
+    const larguraDeFaixa = Math.max(rect.width * .26, 82);
+    const passoMundo = CFG.PISTA_MEIA * .62;
+    const anterior = jogador.x;
+    const novoX = Math.max(faixaX(0), Math.min(faixaX(CFG.PORTAS - 1), inicioArrasto.jogadorX + deslocamento / larguraDeFaixa * passoMundo));
+    jogador.x = novoX;
+    const novaFaixa = Math.max(0, Math.min(CFG.PORTAS - 1, Math.round(inicioArrasto.faixa + deslocamento / larguraDeFaixa)));
     if (novaFaixa !== jogador.faixa) { jogador.faixa = novaFaixa; Audio.mover(); }
     jogador.inclinacao = Math.max(-.34, Math.min(.34, -(novoX - anterior) / 900));
     ev.preventDefault();
@@ -2732,5 +2764,6 @@
   ligarLaco();
 })();
 </script>
+<script src="./scene3d.bundle.js"></script>
 </body>
 </html>
