@@ -1,43 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script>
-    (() => {
-      let savedLanguage = null;
-      try { savedLanguage = localStorage.getItem("kp-lang"); } catch (_) {}
-      const prefersPortuguese = savedLanguage
-        ? savedLanguage === "pt"
-        : (navigator.language || "en").toLowerCase().startsWith("pt");
-      if (prefersPortuguese) location.replace("/pt/");
-    })();
-  </script>
 
   <title>Lab · Kauê Prata</title>
-  <meta name="description" content="Class projects, games and experiments developed by Kauê Prata.">
+  <meta name="description" content="Trabalhos de aula, jogos e experimentos desenvolvidos por Kauê Prata.">
   <meta name="author" content="Kauê Prata">
   <meta name="theme-color" content="#0A0A0B">
-  <link rel="canonical" href="https://lab.kaueprata.com/">
+  <link rel="canonical" href="https://lab.kaueprata.com/pt/">
   <link rel="alternate" hreflang="en" href="https://lab.kaueprata.com/">
   <link rel="alternate" hreflang="pt-BR" href="https://lab.kaueprata.com/pt/">
   <link rel="alternate" hreflang="x-default" href="https://lab.kaueprata.com/">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Lab · Kauê Prata">
-  <meta property="og:url" content="https://lab.kaueprata.com/">
+  <meta property="og:url" content="https://lab.kaueprata.com/pt/">
   <meta property="og:title" content="Lab · Kauê Prata">
-  <meta property="og:description" content="Class projects, games and experiments developed by Kauê Prata.">
+  <meta property="og:description" content="Trabalhos de aula, jogos e experimentos desenvolvidos por Kauê Prata.">
   <meta property="og:image" content="https://lab.kaueprata.com/assets/og-v2.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Lab by Kauê Prata, a collection of projects and experiments">
-  <meta property="og:locale" content="en_US">
-  <meta property="og:locale:alternate" content="pt_BR">
+  <meta property="og:image:alt" content="Laboratório de Kauê Prata, uma coleção de projetos e experimentos">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:locale:alternate" content="en_US">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Lab · Kauê Prata">
-  <meta name="twitter:description" content="Class projects, games and experiments developed by Kauê Prata.">
+  <meta name="twitter:description" content="Trabalhos de aula, jogos e experimentos desenvolvidos por Kauê Prata.">
   <meta name="twitter:image" content="https://lab.kaueprata.com/assets/og-v2.jpg">
 
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -47,16 +37,16 @@
   <noscript><style>.app-list{display:none}.noscript-app{display:block}</style></noscript>
 </head>
 <body>
-  <a class="skip" href="#apps">skip to projects</a>
+  <a class="skip" href="#apps">pular para os projetos</a>
 
   <header class="topbar">
-    <a class="brand" href="/">k.prata · lab</a>
-    <nav class="topnav" aria-label="Main navigation">
-      <a class="back-home" href="https://kaueprata.com/">site <span aria-hidden="true">↗</span></a>
-      <div class="lang" role="group" aria-label="Language">
-        <a class="lang-btn" href="/pt/" hreflang="pt-BR" data-lang="pt">PT</a>
+    <a class="brand" href="/pt/">k.prata · lab</a>
+    <nav class="topnav" aria-label="Navegação principal">
+      <a class="back-home" href="https://kaueprata.com/pt/">site <span aria-hidden="true">↗</span></a>
+      <div class="lang" role="group" aria-label="Idioma">
+        <span class="lang-btn" aria-current="page">PT</span>
         <span class="lang-sep" aria-hidden="true">/</span>
-        <span class="lang-btn" aria-current="page">EN</span>
+        <a class="lang-btn" href="/" hreflang="en" data-lang="en">EN</a>
       </div>
     </nav>
   </header>
@@ -69,10 +59,10 @@
       </div>
       <div class="hero-inner">
         <div class="hero-copy">
-          <p class="kicker">// laboratory</p>
-          <h1 id="hero-title">Ideas in motion.</h1>
-          <p class="hero-line">A place for class projects, games and experiments that can be opened, tested and improved.</p>
-          <a class="hero-link" href="#apps">explore projects <span aria-hidden="true">↓</span></a>
+          <p class="kicker">// laboratório</p>
+          <h1 id="hero-title">Ideias em movimento.</h1>
+          <p class="hero-line">Um espaço para trabalhos de aula, jogos e experimentos que podem ser abertos, testados e melhorados.</p>
+          <a class="hero-link" href="#apps">explorar projetos <span aria-hidden="true">↓</span></a>
         </div>
       </div>
     </section>
@@ -80,29 +70,29 @@
     <section class="section" id="apps" aria-labelledby="apps-title">
       <div class="section-row">
         <div class="section-heading">
-          <h2 class="section-label" id="apps-title">01&nbsp;&nbsp;projects</h2>
-          <span class="app-count" id="app-count" aria-live="polite">loading</span>
+          <h2 class="section-label" id="apps-title">01&nbsp;&nbsp;projetos</h2>
+          <span class="app-count" id="app-count" aria-live="polite">carregando</span>
         </div>
 
         <div class="section-body">
           <div class="toolbar">
-            <label for="app-search">find a project</label>
+            <label for="app-search">encontrar um projeto</label>
             <div class="search-wrap">
-              <input id="app-search" type="search" placeholder="search by name or technology" autocomplete="off">
+              <input id="app-search" type="search" placeholder="buscar por nome ou tecnologia" autocomplete="off">
               <span class="search-key" aria-hidden="true">/</span>
             </div>
           </div>
 
           <div class="app-list" id="app-list"></div>
-          <p class="empty" id="empty" hidden>No projects found.</p>
+          <p class="empty" id="empty" hidden>Nenhum projeto encontrado.</p>
 
           <div class="noscript-app">
             <article class="app-card">
               <a class="app-card-link" href="/tabuada/">
-                <div class="app-topline"><span>001</span><span class="status">available</span></div>
-                <h3>Math Race</h3>
-                <p>A racing game for practicing multiplication by choosing the gate with the right answer.</p>
-                <span class="open-app">open project ↗</span>
+                <div class="app-topline"><span>001</span><span class="status">disponível</span></div>
+                <h3>Corrida da Tabuada</h3>
+                <p>Um jogo de corrida para praticar multiplicação escolhendo a porta com o resultado certo.</p>
+                <span class="open-app">abrir projeto ↗</span>
               </a>
             </article>
           </div>
@@ -112,10 +102,10 @@
 
     <section class="section note" aria-labelledby="about-title">
       <div class="section-row">
-        <h2 class="section-label" id="about-title">02&nbsp;&nbsp;about</h2>
+        <h2 class="section-label" id="about-title">02&nbsp;&nbsp;sobre</h2>
         <div class="section-body note-body">
-          <p>This is where I publish class assignments, prototypes and experiments. Each project has its own route and stays available at the same address.</p>
-          <a href="https://kaueprata.com/">more about me <span aria-hidden="true">↗</span></a>
+          <p>Este é meu espaço para publicar trabalhos de aula, protótipos e experimentos. Cada projeto fica disponível em uma rota própria e continua acessível pelo mesmo endereço.</p>
+          <a href="https://kaueprata.com/pt/">mais sobre mim <span aria-hidden="true">↗</span></a>
         </div>
       </div>
     </section>
@@ -123,7 +113,7 @@
 
   <footer class="footer">
     <p>© 2026 Kauê Prata · São Paulo, BR</p>
-    <span>built to experiment</span>
+    <span>construído para experimentar</span>
   </footer>
 
   <script src="/assets/v2/apps.js" defer></script>
