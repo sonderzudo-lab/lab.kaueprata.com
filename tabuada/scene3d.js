@@ -1,6 +1,7 @@
 import * as THREE from "../assets/vendor/three/three.module.min.js";
 
 const canvas = document.querySelector("#mundo3d");
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(56, 1, .08, 150);
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -35,12 +36,13 @@ const materialCache = new Map();
 const gateMaterialCache = new Map();
 const panelMaterialCache = new Map();
 const mat = (color, options = {}) => {
-  const key = `${color}:${options.emissive || ""}:${options.metalness || 0}:${options.roughness ?? .68}:${options.transparent || false}:${options.opacity ?? 1}`;
+  const key = `${color}:${options.emissive || ""}:${options.metalness || 0}:${options.roughness ?? .68}:${options.transparent || false}:${options.opacity ?? 1}:${options.depthWrite ?? true}`;
   if (!materialCache.has(key)) {
     materialCache.set(key, new THREE.MeshStandardMaterial({
       color, roughness: options.roughness ?? .68, metalness: options.metalness || 0,
       emissive: options.emissive || 0x000000, emissiveIntensity: options.emissive ? .62 : 0,
       transparent: !!options.transparent, opacity: options.opacity ?? 1,
+      depthWrite: options.depthWrite ?? true,
     }));
   }
   return materialCache.get(key);
@@ -59,6 +61,10 @@ const boxGeo = new THREE.BoxGeometry(1, 1, 1);
 const cylGeo = new THREE.CylinderGeometry(1, 1, 1, 16);
 const coneGeo = new THREE.ConeGeometry(1, 1, 16);
 const sphereGeo = new THREE.SphereGeometry(1, 24, 14);
+const wheelGeo = new THREE.CylinderGeometry(.34, .34, .3, 20);
+wheelGeo.rotateZ(Math.PI / 2);
+const wheelHubGeo = new THREE.CylinderGeometry(.17, .17, .315, 16);
+wheelHubGeo.rotateZ(Math.PI / 2);
 const gatePostGeo = new THREE.CapsuleGeometry(.052, 1.98, 5, 12);
 const gateBeamGeo = new THREE.CapsuleGeometry(.052, 1.02, 5, 12);
 const gatePanelGeo = new THREE.PlaneGeometry(1.08, 2.02);
@@ -77,33 +83,93 @@ function roundedBody(material, position, scale, parent) {
   return body;
 }
 
+function loftGeometry(sections) {
+  const positions = [];
+  const faces = [];
+  const addQuad = (a, b, c, d) => faces.push(a, b, c, a, c, d);
+  for (const [z, halfWidth, bottom, top] of sections) {
+    positions.push(-halfWidth, bottom, z, halfWidth, bottom, z, halfWidth, top, z, -halfWidth, top, z);
+  }
+  for (let i = 0; i < sections.length - 1; i++) {
+    const a = i * 4, b = (i + 1) * 4;
+    addQuad(a, a + 1, b + 1, b);
+    addQuad(a + 1, a + 2, b + 2, b + 1);
+    addQuad(a + 2, a + 3, b + 3, b + 2);
+    addQuad(a + 3, a, b, b + 3);
+  }
+  faces.push(0, 2, 1, 0, 3, 2);
+  const end = (sections.length - 1) * 4;
+  faces.push(end, end + 1, end + 2, end, end + 2, end + 3);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(faces); geometry.computeVertexNormals();
+  return geometry;
+}
+
+function cabinGeometry() {
+  const positions = [
+    -.76, .75, -.78, .76, .75, -.78, .76, .75, .64, -.76, .75, .64,
+    -.5, 1.42, -.4, .5, 1.42, -.4, .5, 1.42, .22, -.5, 1.42, .22,
+  ];
+  const faces = [
+    0,1,5, 0,5,4, 1,2,6, 1,6,5, 2,3,7, 2,7,6, 3,0,4, 3,4,7,
+    4,5,6, 4,6,7, 0,3,2, 0,2,1,
+  ];
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(faces); geometry.computeVertexNormals();
+  return geometry;
+}
+
 function createCar(color) {
   const g = new THREE.Group();
-  const paint = mat(color, { metalness: .34, roughness: .26 });
-  const dark = mat("#111722", { metalness: .25, roughness: .35 });
-  const glass = mat("#143d59", { metalness: .18, roughness: .12 });
-  const rubber = mat("#080b10", { roughness: .9 });
-  const metal = mat("#9ca8b6", { metalness: .85, roughness: .2 });
-  roundedBody(paint, [0, .5, 0], [1.22, .32, 1.72], g);
-  roundedBody(paint, [0, .64, .73], [1.05, .25, .92], g);
-  roundedBody(glass, [0, .85, -.05], [.62, .27, .66], g);
-  mesh(boxGeo, dark, [0, .25, 0], [2.18, .22, 2.9], g);
-  mesh(boxGeo, dark, [0, .48, -1.5], [1.78, .32, .08], g);
+  const bodyRig = new THREE.Group(); g.add(bodyRig);
+  const paint = mat(color, { metalness: .38, roughness: .3 });
+  const paintLight = mat(tint(color, .085), { metalness: .32, roughness: .28 });
+  const dark = mat("#0d1420", { metalness: .42, roughness: .34 });
+  const glass = mat("#123e59", { metalness: .25, roughness: .13 });
+  const rubber = mat("#080b10", { roughness: .95 });
+  const metal = mat("#aeb9c6", { metalness: .88, roughness: .18 });
+  const red = mat("#ff334f", { emissive: "#8d1028", roughness: .22 });
+  const white = mat("#eff8ff", { emissive: "#637581", roughness: .2 });
 
-  const wheels = [];
-  for (const x of [-1.03, 1.03]) for (const z of [-.92, .92]) {
-    const wheel = mesh(new THREE.CylinderGeometry(.34, .34, .32, 18), rubber, [x, .26, z], [1, 1, 1], g);
-    wheel.rotation.z = Math.PI / 2; wheels.push(wheel);
-    const hub = mesh(new THREE.CylinderGeometry(.15, .15, .335, 14), metal, [x, .26, z], [1, 1, 1], g);
-    hub.rotation.z = Math.PI / 2;
+  mesh(boxGeo, dark, [0, .22, -.02], [2.18, .18, 3.32], bodyRig);
+  mesh(loftGeometry([
+    [-1.68, .98, .3, .69], [-1.18, 1.1, .29, .84],
+    [.46, 1.08, .3, .82], [1.28, .96, .29, .67], [1.66, .7, .3, .54],
+  ]), paint, [0, 0, 0], [1, 1, 1], bodyRig);
+  mesh(cabinGeometry(), glass, [0, 0, 0], [1, 1, 1], bodyRig);
+  // Teto escuro integra a cabine à silhueta; a antiga placa clara parecia
+  // uma caixa apoiada em cima do carro quando vista pela câmera baixa.
+  mesh(boxGeo, dark, [0, 1.43, -.08], [.98, .045, .6], bodyRig);
+  mesh(boxGeo, paintLight, [0, .88, -.94], [1.78, .12, .55], bodyRig);
+  mesh(boxGeo, dark, [0, .48, -1.705], [1.75, .38, .055], bodyRig);
+
+  for (const x of [-.61, .61]) {
+    mesh(boxGeo, red, [x, .67, -1.74], [.54, .12, .035], bodyRig, false);
+    mesh(boxGeo, white, [x, .61, 1.57], [.42, .1, .035], bodyRig, false);
+    const exhaust = mesh(new THREE.CylinderGeometry(.075, .075, .16, 12), metal, [x * .72, .24, -1.77], [1, 1, 1], bodyRig);
+    exhaust.rotation.x = Math.PI / 2;
   }
-  const spoiler = mesh(boxGeo, dark, [0, 1.04, -1.28], [2.05, .09, .3], g);
-  mesh(boxGeo, dark, [-.72, .78, -1.25], [.08, .55, .08], g);
-  mesh(boxGeo, dark, [.72, .78, -1.25], [.08, .55, .08], g);
-  for (const x of [-.62, .62]) mesh(boxGeo, mat("#ff405b", { emissive: "#751526" }), [x, .54, -1.56], [.42, .13, .045], g, false);
-  mesh(boxGeo, mat("#e8edf3", { metalness: .25, roughness: .35 }), [0, .39, -1.56], [.42, .12, .045], g, false);
-  for (const x of [-.62, .62]) mesh(new THREE.CylinderGeometry(.08, .08, .18, 12), metal, [x, .22, -1.56], [1, 1, 1], g).rotation.x = Math.PI / 2;
-  g.userData = { type: "carro", wheels, body: g.children.filter((x) => x !== spoiler) };
+  mesh(boxGeo, metal, [0, .43, -1.75], [.42, .1, .035], bodyRig, false);
+  mesh(boxGeo, dark, [0, .2, -1.76], [1.74, .18, .18], bodyRig);
+
+  const wing = mesh(boxGeo, dark, [0, 1.17, -1.42], [1.8, .065, .24], bodyRig);
+  wing.rotation.x = -.08;
+  for (const x of [-.58, .58]) mesh(boxGeo, dark, [x, .94, -1.37], [.055, .43, .08], bodyRig);
+
+  const wheels = [], frontWheels = [];
+  for (const x of [-1.02, 1.02]) for (const z of [-1.03, 1.08]) {
+    const carrier = new THREE.Group(); carrier.position.set(x, .3, z); g.add(carrier);
+    const wheel = mesh(wheelGeo, rubber, [0, 0, 0], [1, 1, 1], carrier); wheels.push(wheel);
+    mesh(wheelHubGeo, metal, [x > 0 ? .012 : -.012, 0, 0], [1, 1, 1], carrier);
+    for (let i = 0; i < 5; i++) {
+      const spoke = mesh(boxGeo, dark, [x > 0 ? .175 : -.175, 0, 0], [.025, .045, .23], carrier, false);
+      spoke.rotation.x = i * Math.PI / 5;
+    }
+    if (z > 0) frontWheels.push(carrier);
+  }
+  g.userData = { type: "carro", wheels, frontWheels, bodyRig, wheelSpin: 0, steer: 0 };
   return g;
 }
 
@@ -286,7 +352,9 @@ function rebuildGates(gates, gateColors) {
     const g = new THREE.Group(); g.position.z = gate.z / 1000; gatesLayer.add(g);
     for (let lane = 0; lane < 3; lane++) {
       const color = gateColors[lane];
-      const center = (lane - 1) * 1.24;
+      // A câmera olha para +Z; por isso o eixo X da cena é o inverso do eixo
+      // lógico do jogo. Espelhar aqui mantém pista 1 à esquerda na tela.
+      const center = -(lane - 1) * 1.24;
       mesh(gatePostGeo, gateMat(color), [center - .55, 1.04, 0], [1, 1, 1], g, false);
       mesh(gatePostGeo, gateMat(color), [center + .55, 1.04, 0], [1, 1, 1], g, false);
       const beam = mesh(gateBeamGeo, gateMat(color), [center, 2.08, 0], [1, 1, 1], g, false); beam.rotation.z = Math.PI / 2;
@@ -297,11 +365,30 @@ function rebuildGates(gates, gateColors) {
   }
 }
 
-const capsule = new THREE.Group();
-const core = mesh(new THREE.IcosahedronGeometry(.38, 2), mat("#78efff", { emissive: "#185f75", metalness: .38, roughness: .2 }), [0, 0, 0], [1, 1, 1], capsule);
-const ringA = mesh(new THREE.TorusGeometry(.62, .032, 10, 32), mat("#ad83ff", { emissive: "#42278b" }), [0, 0, 0], [1, 1, 1], capsule, false);
-const ringB = mesh(new THREE.TorusGeometry(.53, .025, 10, 30), mat("#71eaff", { emissive: "#17596b" }), [0, 0, 0], [1, 1, 1], capsule, false);
-ringB.rotation.y = Math.PI / 2; itemLayer.add(capsule); capsule.visible = false;
+function roundedPickupGeometry() {
+  const s = .5, r = .13, shape = new THREE.Shape();
+  shape.moveTo(-s + r, -s);
+  shape.lineTo(s - r, -s); shape.quadraticCurveTo(s, -s, s, -s + r);
+  shape.lineTo(s, s - r); shape.quadraticCurveTo(s, s, s - r, s);
+  shape.lineTo(-s + r, s); shape.quadraticCurveTo(-s, s, -s, s - r);
+  shape.lineTo(-s, -s + r); shape.quadraticCurveTo(-s, -s, -s + r, -s);
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: 1, steps: 1, curveSegments: 4,
+    bevelEnabled: true, bevelSegments: 2, bevelSize: .075, bevelThickness: .075,
+  });
+  geometry.center(); return geometry;
+}
+
+const pickup = new THREE.Group();
+const pickupShell = mesh(roundedPickupGeometry(), mat("#4fe4ff", {
+  emissive: "#126f8a", metalness: .28, roughness: .2, transparent: true, opacity: .72, depthWrite: false,
+}), [0, 0, 0], [1, 1, 1], pickup);
+const pickupCore = mesh(new THREE.OctahedronGeometry(.32, 0), mat("#7d53e8", {
+  emissive: "#36227c", metalness: .42, roughness: .2,
+}), [0, 0, 0], [1, 1, 1], pickup);
+const pickupIcon = textSprite("?", "#ffffff", 88, false);
+pickupIcon.scale.set(1.32, .66, 1);
+itemLayer.add(pickup, pickupIcon); pickup.visible = false; pickupIcon.visible = false;
 
 function resize() {
   const w = Math.max(canvas.clientWidth, 1), h = Math.max(canvas.clientHeight, 1);
@@ -328,14 +415,21 @@ function render(state) {
   if (key !== gatesKey) { gatesKey = key; rebuildGates(state.gates, state.gateColors); }
 
   ensurePlayer(state.runner, state.runnerColor);
-  const escalaCorredor = state.runner === "carro" ? .43 : state.runner === "foguete" ? .26 : .62;
+  const escalaCorredor = state.runner === "carro" ? .46 : state.runner === "foguete" ? .26 : .62;
   player.scale.setScalar(escalaCorredor);
-  player.position.set(state.playerX / 1000, state.runner === "carro" ? .16 : state.runner === "foguete" ? .08 : .04, z + 2.05);
-  player.rotation.y = -state.inclination * 1.15;
-  player.rotation.z = state.runner === "foguete" ? -state.inclination * .45 : state.inclination * .22;
+  player.position.set(-state.playerX / 1000, state.runner === "carro" ? .045 : state.runner === "foguete" ? .08 : .04, z + 2.05);
+  player.rotation.y = state.inclination * (state.runner === "carro" ? 1.02 : 1.15);
+  player.rotation.z = state.runner === "foguete" ? -state.inclination * .45 : state.inclination * .04;
   if (player.userData.type === "carro") {
-    player.position.y += Math.sin(state.time * 17) * .018;
-    player.userData.wheels.forEach((w) => { w.rotation.x -= state.dt * state.speed * .065; });
+    const vigor = Math.min(Math.max(state.speed / 6.2, .35), 1);
+    const vibracao = reducedMotion ? 0 : (Math.sin(state.time * 9.2) * .004 + Math.sin(state.time * 15.7) * .0025) * vigor;
+    player.userData.wheelSpin -= state.dt * state.speed * 6.6;
+    player.userData.steer += (state.inclination * 1.35 - player.userData.steer) * Math.min(state.dt * 12, 1);
+    player.userData.wheels.forEach((wheel) => { wheel.rotation.x = player.userData.wheelSpin; });
+    player.userData.frontWheels.forEach((wheel) => { wheel.rotation.y = player.userData.steer; });
+    player.userData.bodyRig.position.y = vibracao;
+    player.userData.bodyRig.rotation.x = -.012 + Math.sin(state.time * 5.4) * .004 * vigor;
+    player.userData.bodyRig.rotation.z += (state.inclination * .3 - player.userData.bodyRig.rotation.z) * Math.min(state.dt * 9, 1);
   } else if (player.userData.type === "foguete") {
     player.position.y += .3 + Math.sin(state.time * 3.2) * .08;
     const pulse = .8 + Math.abs(Math.sin(state.time * 20)) * .42;
@@ -346,16 +440,22 @@ function render(state) {
   }
 
   const item = state.item;
-  capsule.visible = !!item;
+  pickup.visible = pickupIcon.visible = !!item;
   if (item) {
-    capsule.scale.setScalar(.72);
-    capsule.position.set((item.lane - 1) * 1.24, .75 + Math.sin(state.time * 3) * .12, item.z / 1000);
-    capsule.rotation.y = state.time * 1.8; ringA.rotation.x = state.time * 1.2; ringB.rotation.z = state.time * 1.45;
+    const itemY = .78 + Math.sin(state.time * 2.7) * .09;
+    const itemX = -(item.lane - 1) * 1.24;
+    pickup.scale.setScalar(.64);
+    pickup.position.set(itemX, itemY, item.z / 1000);
+    // A caixa exibe profundidade sem dar as costas para o jogador: a rotação
+    // curta preserva o ponto de interrogação e evita o efeito de “maleta”.
+    pickup.rotation.set(Math.sin(state.time * .72) * .1, Math.sin(state.time * .9) * .42, Math.sin(state.time * .54) * .06);
+    pickupCore.rotation.y = -state.time * 1.7; pickupCore.rotation.x = state.time * .8;
+    pickupIcon.position.set(itemX, itemY, item.z / 1000 - .6);
   }
 
-  const desiredCamera = new THREE.Vector3(state.camX / 1000, 2.35, z - 2.65);
+  const desiredCamera = new THREE.Vector3(-state.camX / 1000, 2.35, z - 2.65);
   camera.position.lerp(desiredCamera, state.dragging ? .34 : .13);
-  camera.lookAt(state.camX / 1000, .18, z + 8.2);
+  camera.lookAt(-state.camX / 1000, .18, z + 8.2);
   sun.position.set(camera.position.x - 7, 12, z - 4);
   sun.target.position.set(0, 0, z + 12); scene.add(sun.target);
   scene.fog = new THREE.Fog(state.colors.fog || state.colors.skyBottom || "#b76e73", 18, 68);

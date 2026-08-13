@@ -899,8 +899,10 @@
       nome: "Carro GT",
       desenhar(ctx, r, t, cor) {
         contorno(ctx, r);
-        const vibra = Math.sin(t * 18) * r * .015;
-        ctx.translate(0, vibra);
+        // A prévia acompanha a suspensão calma do modelo 3D, sem o antigo
+        // tremor rápido que fazia o carro parecer solto da pista.
+        const suspensao = semMovimento ? 0 : Math.sin(t * 5.4) * r * .004;
+        ctx.translate(0, suspensao);
 
         // Rodas vistas por trás: pneus largos, banda e cubos dão volume.
         for (const s of [-1, 1]) {
