@@ -1936,15 +1936,15 @@
       fundo.addColorStop(.72, T.neblina); fundo.addColorStop(1, T.chao[0]);
       ctx.fillStyle = fundo; ctx.fillRect(0, 0, L, A);
       if (T.estrelas) {
-        ctx.fillStyle = "rgba(255,255,255,.85)";
-        for (const e of estrelas) { ctx.beginPath(); ctx.arc(e.x * L, e.y * meioY, e.r, 0, Math.PI * 2); ctx.fill(); }
+        ctx.fillStyle = "rgba(255,255,255,.68)";
+        for (let i = 0; i < estrelas.length; i += 2) {
+          const e = estrelas[i]; ctx.beginPath(); ctx.arc(e.x * L, e.y * meioY, e.r * .82, 0, Math.PI * 2); ctx.fill();
+        }
       }
 
       const gates = [];
-      for (let i = jogo.portao; i <= Math.min(jogo.portao + 3, totalPortoes()); i++) {
-        const q = perguntaDo(i);
-        gates.push({ index: i, z: zDoPortao(i), a: q.a, b: q.b, options: q.opcoes });
-      }
+      const qAtual = perguntaDo(jogo.portao);
+      gates.push({ index: jogo.portao, z: zDoPortao(jogo.portao), a: qAtual.a, b: qAtual.b, options: qAtual.opcoes });
       const atual = itemDo(Math.min(jogo.portao, totalPortoes()));
       const skin = PISTAS[dados.pista] || PISTAS.classica;
       const dtCena = Math.min(Math.max(t - ultimoTempoCena3D, 0), .05); ultimoTempoCena3D = t;
@@ -1959,6 +1959,9 @@
           : null,
         colors: {
           road: (skin.pista || T.pista)[0], ground: T.chao[0],
+          lane: skin.faixa || T.faixa, edges: (skin.borda || T.borda).slice(0, 2),
+          scenery: T.cenario, sceneryDark: T.cenarioEsc,
+          window: dados.tema === "noite" ? "#ffd985" : T.astro,
           fog: T.neblina, skyBottom: T.ceuBaixo,
         },
       });
