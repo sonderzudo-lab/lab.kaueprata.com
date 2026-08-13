@@ -374,16 +374,7 @@
   }
   #flash[data-tipo="acerto"] { --flash-cor: var(--bom); }
   #flash[data-tipo="erro"] { --flash-cor: var(--ruim); }
-  #flash[data-tipo="poder"], #flash[data-tipo="escudo"] { --flash-cor: var(--marca); }
-  #flash[data-tipo="roleta"] {
-    --flash-cor: #58e6ff; width: min(76vw, 370px); gap: 11px;
-    padding: 9px 20px 10px 12px; border-width: 1px;
-    box-shadow: 6px 6px 0 color-mix(in srgb, var(--flash-cor) 28%, transparent), 0 14px 38px rgba(0,0,0,.42);
-  }
-  #flash[data-tipo="roleta"] .flash-sinal { width: 46px; border-width: 2px; border-radius: 13px 6px; font-size: 27px; }
-  #flash[data-tipo="roleta"] .flash-titulo { font-size: 8px; }
-  #flash[data-tipo="roleta"] .conta { font-size: clamp(19px, 4vw, 29px); }
-  #flash[data-tipo="roleta"] .nota { margin-top: 2px; font-size: 11px; }
+  #flash[data-tipo="escudo"] { --flash-cor: var(--marca); }
   #flash.visivel { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(0); }
   #flash[data-tipo="erro"].visivel { animation: flash-erro .32s ease-out; }
   @keyframes flash-erro { 25% { transform: translate(calc(-50% - 8px), 0); } 55% { transform: translate(calc(-50% + 6px), 0); } }
@@ -397,6 +388,49 @@
   .flash-titulo { display: block; margin-bottom: 3px; color: var(--flash-cor); font: 900 10px/1 var(--display); letter-spacing: .2em; text-transform: uppercase; }
   #flash .conta { color: var(--tinta); font-family: var(--display); font-weight: 800; font-size: clamp(25px, 5.5vw, 50px); line-height: 1; }
   #flash .nota { margin-top: 4px; font-family: var(--display); font-weight: 600; font-size: clamp(12px, 1.8vw, 16px); color: var(--tinta-fraca); }
+
+  /* A roleta tem seu próprio aviso compacto. Ela não disputa espaço com o
+     feedback pedagógico nem esconde a conta que continua em andamento. */
+  #power-toast {
+    --power-cor: #58e6ff; position: absolute; z-index: 5; left: 50%; top: clamp(210px, 30vh, 236px);
+    transform: translate(-50%, -8px) scale(.94); display: grid; grid-template-columns: 40px 1fr;
+    align-items: center; gap: 9px; width: min(310px, calc(100% - 28px)); padding: 7px 12px 7px 8px;
+    border: 1px solid color-mix(in srgb, var(--power-cor) 72%, transparent); border-radius: 15px;
+    background: color-mix(in srgb, var(--painel) 92%, transparent); color: var(--power-cor);
+    box-shadow: 0 10px 30px rgba(0,0,0,.3), inset 0 0 20px color-mix(in srgb, var(--power-cor) 8%, transparent);
+    backdrop-filter: blur(8px); pointer-events: none; opacity: 0;
+    transition: opacity .14s ease, transform .2s cubic-bezier(.2,.8,.2,1);
+  }
+  #power-toast.visivel { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  #power-toast.resolvido { animation: power-resolvido .42s ease-out; }
+  @keyframes power-resolvido { 35% { transform: translate(-50%, 0) scale(1.06); } }
+  .power-icone {
+    display: grid; place-items: center; width: 40px; aspect-ratio: 1; border-radius: 12px;
+    border: 1px solid currentColor; background: color-mix(in srgb, var(--power-cor) 14%, var(--fundo));
+    font: 900 22px/1 var(--display);
+  }
+  .power-copy { min-width: 0; display: grid; gap: 1px; }
+  .power-copy small { color: var(--tinta-fraca); font: 700 8px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; }
+  .power-copy strong { overflow: hidden; color: var(--tinta); font: 800 16px/1.1 var(--display); text-overflow: ellipsis; white-space: nowrap; }
+  .power-copy span { overflow: hidden; color: var(--tinta-fraca); font: 600 10px/1.2 var(--display); text-overflow: ellipsis; white-space: nowrap; }
+
+  #pickup-fx { position: absolute; z-index: 4; left: 50%; top: 68%; width: 1px; height: 1px; pointer-events: none; }
+  #pickup-fx::before {
+    content: ""; position: absolute; inset: -16px; border: 3px solid #58e6ff; border-radius: 50%;
+    opacity: 0; box-shadow: 0 0 20px #58e6ff;
+  }
+  #pickup-fx i { position: absolute; width: 7px; height: 7px; border-radius: 2px; background: var(--cor); opacity: 0; }
+  #pickup-fx.ativo::before { animation: coleta-anel .62s ease-out; }
+  #pickup-fx.ativo i { animation: coleta-faisca .68s cubic-bezier(.12,.68,.22,1) var(--atraso) both; }
+  @keyframes coleta-anel {
+    0% { opacity: .95; transform: scale(.35); }
+    100% { opacity: 0; transform: scale(5.2, 2.4); }
+  }
+  @keyframes coleta-faisca {
+    0% { opacity: 1; transform: translate(-50%,-50%) rotate(0) scale(.35); }
+    55% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.85); }
+  }
 
   #pergunta-fixa {
     position: absolute; z-index: 3; left: 50%; top: clamp(82px, 13vh, 118px);
@@ -471,6 +505,7 @@
     #f-boost .rotulo { display: none; }
     #pergunta-fixa { top: 66px; padding: 7px 14px; }
     #flash { top: 64px; width: calc(100% - 22px); }
+    #power-toast { top: 218px; width: calc(100% - 30px); }
     #cockpit-hud { left: 8px; bottom: max(8px, env(safe-area-inset-bottom)); gap: 6px; }
     #f-vel { width: 118px; height: 94px; border-radius: 64px 64px 17px 17px; }
     .vel-arco { width: 92px; height: 92px; left: 12px; top: 8px; }
@@ -548,6 +583,16 @@
     <small>Conta atual</small>
     <span class="conta-atual" id="conta-atual">1 × 1 = ?</span>
   </div>
+
+  <div id="power-toast" aria-live="polite" aria-hidden="true">
+    <div class="power-icone" id="power-icone" aria-hidden="true">?</div>
+    <div class="power-copy">
+      <small id="power-etapa">Cápsula surpresa</small>
+      <strong id="power-nome">Sorteando…</strong>
+      <span id="power-nota">Vantagem a caminho</span>
+    </div>
+  </div>
+  <div id="pickup-fx" aria-hidden="true"></div>
 
   <div id="quiz-acessivel" class="sr-only" aria-live="polite" hidden>
     <p id="pergunta-acessivel"></p>
@@ -1271,7 +1316,7 @@
     z: 0, faixa: 1, x: 0, alvoX: 0, velocidadeX: 0,
     inclinacao: 0, arrastando: false,
   };
-  let camX = 0, travaPortao = 0, tremor = 0, poeira = [], tempoJogo = 0;
+  let camX = 0, travaPortao = 0, tremor = 0, poeira = [], ondasPoder = [], tempoJogo = 0;
   let itens = new Map();   // índice do portão -> item ou null
 
   const modoAtual = () => MODOS[dados.modo] || MODOS.normal;
@@ -1321,7 +1366,7 @@
     jogador.z = zDoPortao(1) - CFG.VAO * 0.92;
     jogador.faixa = 1; jogador.x = faixaX(1); jogador.alvoX = jogador.x;
     jogador.velocidadeX = 0; jogador.inclinacao = 0; jogador.arrastando = false;
-    camX = 0; travaPortao = 0; tremor = 0; poeira = []; tempoJogo = 0;
+    camX = 0; travaPortao = 0; tremor = 0; poeira = []; ondasPoder = []; tempoJogo = 0;
   }
 
   /* ==================================================================
@@ -1915,13 +1960,64 @@
     }
   }
 
+  function explodirPowerUp() {
+    if (semMovimento) return;
+    const p = projetar(jogador.x, 420, jogador.z + CFG.JOGADOR_A_FRENTE, jogador.z);
+    if (!p) return;
+    const cores = ["#58e6ff", "#a96cff", "#fff2a8", "#ffffff"];
+    const fx = document.getElementById("pickup-fx");
+    if (!fx.children.length) {
+      for (let i = 0; i < 22; i++) fx.appendChild(document.createElement("i"));
+    }
+    fx.style.left = `${p.x}px`; fx.style.top = `${p.y}px`;
+    [...fx.children].forEach((faisca, i) => {
+      const angulo = Math.PI * 2 * i / fx.children.length + (Math.random() - .5) * .25;
+      const distancia = 48 + Math.random() * 86;
+      faisca.style.setProperty("--dx", `${Math.cos(angulo) * distancia}px`);
+      faisca.style.setProperty("--dy", `${Math.sin(angulo) * distancia * .58}px`);
+      faisca.style.setProperty("--rot", `${180 + Math.random() * 420}deg`);
+      faisca.style.setProperty("--atraso", `${Math.random() * 55}ms`);
+      faisca.style.setProperty("--cor", cores[i % cores.length]);
+    });
+    fx.classList.remove("ativo"); void fx.offsetWidth; fx.classList.add("ativo");
+    ondasPoder.push({ x: p.x, y: p.y, vida: 1, r: 14, cor: "#58e6ff" });
+    for (let i = 0; i < 30; i++) {
+      const angulo = Math.PI * 2 * i / 30 + (Math.random() - .5) * .22;
+      const impulso = 150 + Math.random() * 330;
+      poeira.push({
+        x: p.x + Math.cos(angulo) * 8, y: p.y + Math.sin(angulo) * 5,
+        vx: Math.cos(angulo) * impulso, vy: Math.sin(angulo) * impulso - 80,
+        vida: 1, cor: cores[i % cores.length], r: 2.5 + Math.random() * 4,
+        gravidade: 170, fade: 2.05, forma: i % 3 ? "losango" : "risco",
+        giro: Math.random() * Math.PI, vgiro: (Math.random() - .5) * 9,
+      });
+    }
+  }
+
   function desenharPoeira(dt) {
+    ondasPoder = ondasPoder.filter((onda) => onda.vida > 0);
+    for (const onda of ondasPoder) {
+      onda.vida -= dt * 2.25; onda.r += dt * 180;
+      ctx.save(); ctx.globalAlpha = Math.max(onda.vida, 0) * .8;
+      ctx.strokeStyle = onda.cor; ctx.lineWidth = 2 + onda.vida * 3;
+      ctx.shadowColor = onda.cor; ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.ellipse(onda.x, onda.y, onda.r * 1.35, onda.r * .55, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    }
     poeira = poeira.filter((p) => p.vida > 0);
     for (const p of poeira) {
-      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 700 * dt; p.vida -= dt * 1.5;
-      ctx.globalAlpha = Math.max(p.vida, 0) * .9;
-      ctx.fillStyle = p.cor;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.gravidade ?? 700) * dt; p.vida -= dt * (p.fade ?? 1.5);
+      p.giro = (p.giro || 0) + (p.vgiro || 0) * dt;
+      ctx.save(); ctx.globalAlpha = Math.max(p.vida, 0) * .9; ctx.fillStyle = p.cor;
+      if (p.forma === "losango") {
+        ctx.translate(p.x, p.y); ctx.rotate(p.giro); ctx.shadowColor = p.cor; ctx.shadowBlur = 9;
+        ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
+      } else if (p.forma === "risco") {
+        ctx.strokeStyle = p.cor; ctx.lineWidth = Math.max(1.5, p.r * .65); ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * .045, p.y - p.vy * .045); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
     }
     ctx.globalAlpha = 1;
   }
@@ -2051,6 +2147,8 @@
   const elVidas = el("vidas"), fVidas = el("f-vidas");
   const flash = el("flash"), flashConta = el("flash-conta"), flashNota = el("flash-nota");
   const flashSinal = el("flash-sinal"), flashTitulo = el("flash-titulo");
+  const powerToast = el("power-toast"), powerIcone = el("power-icone");
+  const powerEtapa = el("power-etapa"), powerNome = el("power-nome"), powerNota = el("power-nota");
   const perguntaFixa = el("pergunta-fixa"), contaAtual = el("conta-atual");
   const perguntaAcessivel = el("pergunta-acessivel"), itemAcessivel = el("item-acessivel");
   const respostasAcessiveis = [...el("respostas-acessiveis").querySelectorAll("button")];
@@ -2119,9 +2217,7 @@
     const identidade = {
       acerto: { titulo: "Traçado perfeito", sinal: "✓" },
       erro: { titulo: "Portão incorreto", sinal: "×" },
-      poder: { titulo: "Vantagem liberada", sinal: "◆" },
       escudo: { titulo: "Impacto absorvido", sinal: "◇" },
-      roleta: { titulo: "Cápsula surpresa", sinal: "?" },
     }[tipo] || { titulo: "Corrida", sinal: "•" };
     flashConta.textContent = conta;
     flashNota.textContent = nota;
@@ -2147,15 +2243,32 @@
 
   let roletaPoder = 0;
 
+  function pintarPowerToast(poder, resolvido = false) {
+    powerToast.style.setProperty("--power-cor", poder?.cor || "#58e6ff");
+    powerIcone.textContent = poder?.simbolo || "?";
+    powerEtapa.textContent = resolvido ? "Vantagem liberada" : "Cápsula surpresa";
+    powerNome.textContent = poder?.nome || "Sorteando…";
+    powerNota.textContent = resolvido ? poder.desc : "Sorteando sem interromper a conta";
+    powerToast.classList.remove("resolvido");
+    if (resolvido) { void powerToast.offsetWidth; powerToast.classList.add("resolvido"); }
+    powerToast.classList.add("visivel");
+    powerToast.setAttribute("aria-hidden", "false");
+  }
+
+  function esconderPowerToast() {
+    powerToast.classList.remove("visivel", "resolvido");
+    powerToast.setAttribute("aria-hidden", "true");
+  }
+
   function aplicarPoder(tipo) {
     const poder = PODERES[tipo];
     if (!poder || (estado !== "jogando" && estado !== "concluindo")) return;
-    Audio.poder(); soltarPoeira(poder.cor, 24);
+    Audio.poder(); soltarPoeira(poder.cor, 14);
     if (tipo === "escudo") jogo.escudo = true;
     else if (tipo === "dobro") jogo.dobroAte = jogo.portao + 3;
     else if (tipo === "lento") jogo.lentoAte = jogo.portao + 2;
     else if (tipo === "vida" && modoAtual().vidas !== Infinity) jogo.vidas++;
-    mostrarFlash(poder.simbolo, `${poder.nome} — ${poder.desc}`, poder.cor, 1.05, "poder");
+    pintarPowerToast(poder, true);
     pintarPainel(false);
   }
 
@@ -2164,28 +2277,25 @@
     if (!it || it.pego || it.faixa !== jogador.faixa) return;
     it.pego = true;
     const minhaRoleta = ++roletaPoder;
-    Audio.poder(); soltarPoeira("#58e6ff", 16);
-    mostrarFlash("?", "Roleta de vantagens", "#58e6ff", 1.5, "roleta");
+    Audio.poder(); explodirPowerUp(); pintarPowerToast(null, false);
 
-    // Passa várias vezes pelos itens, desacelerando antes de revelar o prêmio.
-    // O resultado continua decidido na criação da cápsula, sem trocar no meio.
+    // Poucas trocas rápidas preservam a surpresa sem esconder a próxima conta.
+    // O prêmio continua decidido na criação da cápsula e nunca muda no ciclo.
     const chaves = Object.keys(PODERES);
     let passo = 0;
-    const total = 10;
+    const total = 6;
     const girar = () => {
       if (minhaRoleta !== roletaPoder || estado === "menu" || estado === "fim") return;
       if (passo >= total) {
-        setTimeout(() => { if (minhaRoleta === roletaPoder) aplicarPoder(it.premio); }, 100);
+        aplicarPoder(it.premio);
+        setTimeout(() => { if (minhaRoleta === roletaPoder) esconderPowerToast(); }, 820);
         return;
       }
       const chave = chaves[(passo + i) % chaves.length];
       const poder = PODERES[chave];
-      flashSinal.textContent = poder.simbolo;
-      flashConta.textContent = poder.nome;
-      flashNota.textContent = "Sorteando…";
-      flash.style.setProperty("--flash-cor", poder.cor);
+      pintarPowerToast(poder, false);
       Audio.roleta(passo);
-      const espera = 52 + passo * 10;
+      const espera = 38 + passo * 12;
       passo++;
       setTimeout(girar, espera);
     };
@@ -2308,7 +2418,7 @@
 
     if (tremor > 0) tremor = Math.max(tremor - dt * 2.2, 0);
     desenharCena(tempoJogo);
-    if (estado === "jogando" || poeira.length) desenharPoeira(dt);
+    if (estado === "jogando" || poeira.length || ondasPoder.length) desenharPoeira(dt);
     if (animando) requestAnimationFrame(quadro);
   }
 
@@ -2329,6 +2439,7 @@
     flash.classList.remove("visivel");
     flash.setAttribute("aria-hidden", "true");
     flashConta.textContent = ""; flashNota.textContent = "";
+    esconderPowerToast();
   }
 
   function irParaMenu() {

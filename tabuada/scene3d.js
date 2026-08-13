@@ -128,7 +128,9 @@ function createCar(color) {
   const bodyRig = new THREE.Group(); g.add(bodyRig);
   const paint = mat(color, { metalness: .48, roughness: .25 });
   const paintLight = mat(tint(color, .09), { metalness: .4, roughness: .24 });
+  const paintShadow = mat(tint(color, -.105), { metalness: .42, roughness: .3 });
   const dark = mat("#090e17", { metalness: .52, roughness: .29 });
+  const grille = mat("#1b222c", { metalness: .6, roughness: .42 });
   const glass = mat("#0b3856", { metalness: .34, roughness: .08 });
   const rubber = mat("#080b10", { roughness: .95 });
   const metal = mat("#b9c4cf", { metalness: .92, roughness: .14 });
@@ -155,7 +157,7 @@ function createCar(color) {
   }
   mesh(cabinGeometry(), glass, [0, 0, 0], [1, 1, 1], bodyRig);
   mesh(boxGeo, dark, [0, 1.255, -.13], [.96, .035, .54], bodyRig);
-  const engineGlass = mesh(boxGeo, glass, [0, .81, -1.03], [1.18, .045, .52], bodyRig);
+  const engineGlass = roundedBody(glass, [0, .81, -1.02], [.61, .045, .39], bodyRig);
   engineGlass.rotation.x = -.11;
   // Plenum e coletores ficam visíveis sob a tampa do motor.
   for (const x of [-.36, -.12, .12, .36]) {
@@ -176,19 +178,38 @@ function createCar(color) {
 
   // Traseira limpa com faixa de LED contínua, difusor profundo e escapamento
   // central duplo — os elementos que mais aparecem durante a corrida.
+  for (const side of [-1, 1]) {
+    roundedBody(paintShadow, [side * .79, .45, -1.36], [.31, .2, .22], bodyRig);
+    const crease = mesh(boxGeo, dark, [side * .92, .56, -1.5], [.035, .08, .42], bodyRig, false);
+    crease.rotation.z = side * .16;
+  }
   mesh(boxGeo, dark, [0, .43, -1.735], [1.88, .3, .055], bodyRig);
+  mesh(boxGeo, grille, [0, .75, -1.748], [1.18, .14, .035], bodyRig, false);
+  for (let x = -.5; x <= .5; x += .1) {
+    mesh(sphereGeo, dark, [x, .75, -1.774], [.018, .018, .009], bodyRig, false);
+  }
   mesh(boxGeo, red, [0, .59, -1.77], [1.58, .055, .026], bodyRig, false);
   for (let i = -6; i <= 6; i++) {
     mesh(boxGeo, redHot, [i * .115, .592, -1.788], [.045, .026, .012], bodyRig, false);
   }
   for (const x of [-.84, .84]) mesh(boxGeo, red, [x, .55, -1.77], [.12, .13, .026], bodyRig, false);
-  const badge = mesh(new THREE.OctahedronGeometry(.06, 0), metal, [0, .71, -1.778], [1, .7, .35], bodyRig, false);
+  const badge = mesh(new THREE.OctahedronGeometry(.055, 0), metal, [0, .84, -1.778], [1, .7, .35], bodyRig, false);
   badge.rotation.z = Math.PI / 4;
   mesh(boxGeo, dark, [0, .15, -1.79], [1.96, .2, .23], bodyRig);
   for (const x of [-.68, -.34, 0, .34, .68]) mesh(boxGeo, dark, [x, .17, -1.91], [.035, .2, .3], bodyRig);
   for (const x of [-.2, .2]) {
     const exhaust = mesh(new THREE.CylinderGeometry(.09, .09, .18, 14), metal, [x, .29, -1.82], [1, 1, 1], bodyRig);
     exhaust.rotation.x = Math.PI / 2;
+    const hollow = mesh(new THREE.CylinderGeometry(.055, .055, .025, 14), dark, [x, .29, -1.923], [1, 1, 1], bodyRig, false);
+    hollow.rotation.x = Math.PI / 2;
+  }
+  mesh(boxGeo, dark, [0, .43, -1.79], [.5, .16, .025], bodyRig, false);
+  mesh(boxGeo, mat("#e9edf0", { metalness: .18, roughness: .5 }), [0, .43, -1.807], [.34, .09, .012], bodyRig, false);
+  for (const x of [-.78, .78]) mesh(boxGeo, redHot, [x, .28, -1.84], [.18, .035, .018], bodyRig, false);
+  // Braços da suspensão aparecem discretamente sob a traseira.
+  for (const side of [-1, 1]) {
+    const arm = mesh(new THREE.CapsuleGeometry(.025, .55, 3, 8), brakeMetal, [side * .48, .22, -1.58], [1, 1, 1], bodyRig, false);
+    arm.rotation.z = side * .92; arm.rotation.x = .35;
   }
   for (const x of [-.56, .56]) mesh(boxGeo, white, [x, .48, 1.66], [.4, .075, .035], bodyRig, false);
 
