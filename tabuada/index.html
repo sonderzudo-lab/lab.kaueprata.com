@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corrida da Tabuada · Apps de Kauê Prata</title>
+<meta name="description" content="Jogo de corrida para praticar a tabuada de multiplicação no navegador.">
+<meta name="theme-color" content="#0e1726">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --fundo: #0e1726; --painel: #162033; --painel-borda: #27324c;
+    --tinta: #f3f6fb; --tinta-fraca: #93a0bb; --marca: #ffc23d;
+    --bom: #35c46a; --ruim: #ff5d5d;
+    --display: "Segoe UI Rounded", ui-rounded, "SF Pro Rounded", "Nunito", "Trebuchet MS", system-ui, sans-serif;
+    --corpo: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--fundo); color: var(--tinta); font-family: var(--corpo);
+    overflow: hidden; -webkit-tap-highlight-color: transparent;
+  }
+  #palco { position: relative; width: 100%; height: 100%; touch-action: none; }
+  canvas#pista { display: block; width: 100%; height: 100%; }
+
+  /* ============================================================ painel == */
+
+  #painel {
+    position: absolute; inset: 0 0 auto 0; display: flex; align-items: center;
+    gap: 8px; padding: 12px clamp(10px, 2.5vw, 22px); pointer-events: none;
+    flex-wrap: wrap; opacity: 0; transition: opacity .25s;
+  }
+  #painel.ativo { opacity: 1; }
+
+  .ficha {
+    display: flex; align-items: baseline; gap: 7px; padding: 6px 13px 7px;
+    border: 2px solid var(--painel-borda); border-radius: 999px;
+    background: color-mix(in srgb, var(--painel) 88%, transparent);
+    font-family: var(--display); line-height: 1; backdrop-filter: blur(3px);
+  }
+  .ficha .rotulo {
+    color: var(--tinta-fraca); font-family: var(--corpo);
+    font-size: clamp(9px, 1.15vw, 11px); letter-spacing: .1em; text-transform: uppercase;
+  }
+  .ficha .valor { font-weight: 700; font-variant-numeric: tabular-nums; font-size: clamp(15px, 2vw, 19px); }
+  #f-tabuada .valor { color: var(--marca); }
+  #f-seq.quente { border-color: var(--marca); }
+  #f-seq.quente .valor { color: var(--marca); }
+
+  /* Vidas: painel próprio e grande. Perder uma vida é o momento mais
+     importante da partida — precisa ser impossível não perceber. */
+  #f-vidas { padding: 5px 14px 6px; gap: 10px; }
+  #vidas { display: flex; gap: 6px; }
+  #vidas .cor {
+    font-size: clamp(20px, 3vw, 27px); line-height: 1; color: var(--ruim);
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.4));
+    transition: transform .18s, opacity .18s, filter .18s;
+  }
+  #vidas .cor.gasta { opacity: .2; color: var(--tinta-fraca); transform: scale(.72); filter: none; }
+  #vidas .cor.quebrando { animation: quebrar .75s ease-out forwards; }
+  @keyframes quebrar {
+    0%   { transform: scale(1)   rotate(0);     opacity: 1; }
+    18%  { transform: scale(1.9) rotate(-12deg); opacity: 1; }
+    42%  { transform: scale(1.5) rotate(14deg);  opacity: 1; }
+    100% { transform: scale(.72) rotate(0) translateY(9px); opacity: .2; }
+  }
+  #f-vidas.infinito .rotulo { color: var(--marca); }
+
+  /* Velocímetro */
+  #f-vel { flex-direction: column; align-items: stretch; gap: 4px; padding: 7px 14px 8px; }
+  #f-vel .topo { display: flex; align-items: baseline; gap: 7px; }
+  #barra-vel {
+    width: clamp(52px, 8vw, 84px); height: 5px; border-radius: 999px;
+    background: color-mix(in srgb, var(--tinta-fraca) 35%, transparent); overflow: hidden;
+  }
+  #barra-vel i { display: block; height: 100%; width: 0%; border-radius: 999px; background: var(--marca); transition: width .25s linear; }
+
+  #f-boost { border-color: var(--marca); color: var(--marca); }
+  #f-boost[hidden] { display: none; }
+
+  #cresce { flex: 1 1 auto; }
+
+  /* Clarão vermelho ao perder vida. */
+  #dano {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0;
+    background: radial-gradient(ellipse at center, transparent 34%, color-mix(in srgb, var(--ruim) 82%, transparent) 100%);
+  }
+  #dano.bate { animation: bater .62s ease-out; }
+  @keyframes bater { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ============================================================ botões == */
+
+  button {
+    pointer-events: auto; font-family: var(--display); font-weight: 600; color: var(--tinta);
+    background: color-mix(in srgb, var(--painel) 92%, transparent);
+    border: 2px solid var(--painel-borda); border-radius: 999px;
+    padding: 8px 16px; font-size: clamp(12px, 1.6vw, 14px); cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s, transform .1s;
+  }
+  button:hover { border-color: var(--marca); color: var(--marca); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible { outline: 3px solid var(--marca); outline-offset: 3px; }
+  button[aria-pressed="true"] {
+    border-color: var(--marca); color: var(--marca);
+    background: color-mix(in srgb, var(--marca) 16%, transparent);
+  }
+  .principal {
+    background: var(--marca); border-color: var(--marca); color: #1a1206;
+    font-size: clamp(16px, 2.5vw, 20px); font-weight: 700; padding: 14px 36px;
+  }
+  .principal:hover { background: var(--tinta); border-color: var(--tinta); color: var(--fundo); }
+  .principal[aria-pressed="true"] { background: var(--marca); color: #1a1206; }
+  .fantasma { background: transparent; }
+
+  /* =========================================================== telas ==== */
+
+  .tela {
+    position: absolute; inset: 0; display: grid; align-content: start; justify-items: center;
+    gap: clamp(12px, 2vh, 20px); padding: clamp(16px, 3.5vw, 34px) clamp(14px, 4vw, 34px) 60px;
+    text-align: center; overflow-y: auto;
+    background: color-mix(in srgb, var(--fundo) 86%, transparent); backdrop-filter: blur(7px);
+  }
+  .tela[hidden] { display: none; }
+
+  h1 {
+    margin: 0; font-family: var(--display); font-weight: 700;
+    font-size: clamp(32px, 7.5vw, 68px); line-height: .93; letter-spacing: -.025em; text-wrap: balance;
+  }
+  h1 em { font-style: normal; color: var(--marca); }
+  h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(24px, 5vw, 40px); line-height: 1; }
+
+  .legenda { margin: 0; max-width: 46ch; font-size: clamp(13px, 1.9vw, 16px); line-height: 1.5; color: var(--tinta-fraca); text-wrap: pretty; }
+
+  kbd {
+    display: inline-block; min-width: 1.8em; padding: 2px 7px;
+    border: 2px solid var(--painel-borda); border-bottom-width: 4px; border-radius: 7px;
+    font-family: var(--display); font-weight: 700; color: var(--tinta);
+  }
+
+  .cartao {
+    width: min(94vw, 470px); padding: clamp(12px, 2.6vw, 18px);
+    border: 2px solid var(--painel-borda); border-radius: 18px;
+    background: color-mix(in srgb, var(--painel) 80%, transparent); text-align: left;
+  }
+  .cartao h3 {
+    margin: 0 0 9px; font-family: var(--display); font-size: clamp(12px, 1.7vw, 14px);
+    letter-spacing: .07em; text-transform: uppercase; color: var(--tinta-fraca);
+  }
+  .cartao .aviso { margin: -5px 0 10px; font-size: clamp(10.5px, 1.4vw, 12px); color: var(--tinta-fraca); line-height: 1.45; }
+
+  .linha { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .linha + .rot { margin-top: 12px; }
+  .rot {
+    width: 100%; font-family: var(--corpo); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--tinta-fraca); margin-bottom: 5px;
+  }
+
+  /* Modos: cartões grandes, é a primeira escolha da criança. */
+  #modos { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 8px; width: 100%; }
+  #modos button { display: grid; gap: 3px; padding: 12px 10px; border-radius: 15px; text-align: center; }
+  #modos .mt { font-size: clamp(14px, 2vw, 16px); font-weight: 700; }
+  #modos .md { font-size: 11px; font-weight: 500; color: var(--tinta-fraca); line-height: 1.3; }
+  #modos button[aria-pressed="true"] .md { color: inherit; }
+
+  #previa { display: grid; place-items: center; }
+  canvas#preview { width: 116px; height: 116px; }
+
+  ol.placar { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+  ol.placar li {
+    display: grid; grid-template-columns: 1.9em 1fr auto auto; align-items: baseline; gap: 9px;
+    padding: 7px 10px; border-radius: 11px;
+    background: color-mix(in srgb, var(--fundo) 45%, transparent);
+    font-family: var(--display); font-size: clamp(13px, 1.8vw, 15px);
+  }
+  ol.placar li.destaque { background: color-mix(in srgb, var(--marca) 22%, transparent); border: 2px solid var(--marca); padding: 5px 8px; }
+  ol.placar .pos { color: var(--tinta-fraca); font-variant-numeric: tabular-nums; }
+  ol.placar .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  ol.placar .modo { font-size: .78em; color: var(--tinta-fraca); }
+  ol.placar .pts { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--marca); }
+  ol.placar .vazio { grid-column: 1 / -1; color: var(--tinta-fraca); font-family: var(--corpo); font-size: 13px; }
+
+  .numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; width: min(94vw, 440px); }
+  .numeros div { padding: 11px 8px; border: 2px solid var(--painel-borda); border-radius: 14px; background: color-mix(in srgb, var(--painel) 70%, transparent); }
+  .numeros .n { display: block; font-family: var(--display); font-weight: 700; font-size: clamp(21px, 4.4vw, 31px); line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .numeros .r { display: block; margin-top: 3px; font-size: clamp(9.5px, 1.35vw, 11px); letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-fraca); }
+  #n-pontos .n { color: var(--marca); }
+
+  #recorde {
+    display: grid; gap: 9px; justify-items: center; width: min(94vw, 440px); padding: 13px;
+    border: 2px solid var(--marca); border-radius: 17px; background: color-mix(in srgb, var(--marca) 14%, transparent);
+  }
+  #recorde[hidden] { display: none; }
+  #recorde p { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(14px, 2.2vw, 17px); }
+
+  input[type="text"] {
+    width: min(72vw, 240px); padding: 10px 15px; border: 2px solid var(--painel-borda);
+    border-radius: 999px; background: var(--fundo); color: var(--tinta);
+    font-family: var(--display); font-size: clamp(14px, 2vw, 16px); font-weight: 600; text-align: center;
+  }
+  input[type="text"]:focus-visible { outline: 3px solid var(--marca); outline-offset: 2px; border-color: var(--marca); }
+
+  #frase { margin: 0; font-family: var(--display); font-size: clamp(13px, 1.9vw, 16px); color: var(--marca); font-style: italic; }
+
+  /* ---------------------------------------------------------- flash ---- */
+
+  #flash {
+    position: absolute; left: 50%; top: clamp(70px, 11vh, 112px);
+    transform: translate(-50%, -8px) scale(.93);
+    display: grid; justify-items: center; gap: 3px; width: min(88vw, 580px);
+    padding: clamp(12px, 2.3vw, 20px) clamp(16px, 3.5vw, 32px);
+    border: 3px solid currentColor; border-radius: 22px;
+    background: color-mix(in srgb, var(--fundo) 93%, transparent);
+    box-shadow: 0 16px 46px rgba(0,0,0,.5); pointer-events: none; opacity: 0;
+    transition: opacity .2s ease-out, transform .2s ease-out; text-align: center;
+  }
+  #flash.visivel { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  #flash .conta { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 7vw, 66px); line-height: 1; }
+  #flash .nota { font-family: var(--display); font-weight: 600; font-size: clamp(13px, 2.1vw, 18px); color: var(--tinta); }
+
+  #canto {
+    position: absolute; right: clamp(10px, 2.5vw, 22px); bottom: clamp(10px, 2.5vw, 22px);
+    display: flex; gap: 6px; opacity: 0; transition: opacity .25s;
+  }
+  #canto.ativo { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="palco">
+  <canvas id="pista"></canvas>
+  <div id="dano"></div>
+
+  <div id="painel">
+    <div class="ficha" id="f-tabuada"><span class="rotulo">Tabuada</span><span class="valor" id="v-tabuada">2</span></div>
+    <div class="ficha" id="f-pontos"><span class="rotulo">Pontos</span><span class="valor" id="v-pontos">0</span></div>
+    <div class="ficha" id="f-seq"><span class="rotulo">Seguidas</span><span class="valor" id="v-seq">0</span></div>
+    <div class="ficha" id="f-vidas"><span class="rotulo">Vidas</span><span id="vidas"></span></div>
+    <div class="ficha" id="f-vel">
+      <span class="topo"><span class="rotulo">Velocidade</span><span class="valor" id="v-vel">60</span></span>
+      <span id="barra-vel"><i></i></span>
+    </div>
+    <div class="ficha" id="f-boost" hidden><span class="rotulo" id="v-boost-r">Escudo</span><span class="valor" id="v-boost">•</span></div>
+    <div id="cresce"></div>
+  </div>
+
+  <div id="canto">
+    <button id="b-sfx-jogo" class="fantasma" type="button" aria-pressed="true">🔊</button>
+    <button id="b-mus-jogo" class="fantasma" type="button" aria-pressed="true">🎵</button>
+    <button id="b-sair" class="fantasma" type="button">Menu</button>
+  </div>
+
+  <div id="flash" aria-live="polite">
+    <div class="conta" id="flash-conta"></div>
+    <div class="nota" id="flash-nota"></div>
+  </div>
+
+  <!-- ======================================================= menu ====== -->
+  <div class="tela" id="menu">
+    <h1>Corrida da <em>Tabuada</em></h1>
+    <p class="legenda">
+      Passe pela porta com o resultado certo. Pegue os poderes pelo caminho.
+      Troque de pista com <kbd>←</kbd> <kbd>→</kbd>, <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>,
+      ou tocando na tela.
+    </p>
+
+    <div class="cartao">
+      <h3>Modo de jogo</h3>
+      <div id="modos"></div>
+    </div>
+
+    <button id="b-jogar" class="principal" type="button">Correr</button>
+
+    <div class="cartao">
+      <h3>Visual</h3>
+      <div id="previa"><canvas id="preview" width="232" height="232"></canvas></div>
+      <div class="rot">Corredor</div>
+      <div class="linha" id="skins-corredor"></div>
+      <div class="rot">Portões</div>
+      <div class="linha" id="skins-portal"></div>
+      <div class="rot">Números</div>
+      <div class="linha" id="skins-fonte"></div>
+      <div class="rot">Tema</div>
+      <div class="linha">
+        <button class="temaBtn" type="button" data-tema="dia">Dia</button>
+        <button class="temaBtn" type="button" data-tema="noite">Noite</button>
+        <button class="temaBtn" type="button" data-tema="giz">Giz</button>
+      </div>
+    </div>
+
+    <div class="cartao">
+      <h3>Melhores corridas</h3>
+      <p class="aviso">Guardado só neste aparelho — não é um placar da turma.</p>
+      <ol class="placar" id="placar"></ol>
+    </div>
+
+    <div class="linha" style="justify-content:center">
+      <button id="b-daltonismo" type="button" aria-pressed="false">Modo daltonismo</button>
+      <button id="b-sfx" type="button" aria-pressed="true">Efeitos</button>
+      <button id="b-mus" type="button" aria-pressed="true">Música</button>
+      <button id="b-limpar" class="fantasma" type="button">Apagar placar</button>
+    </div>
+  </div>
+
+  <!-- ======================================================== fim ====== -->
+  <div class="tela" id="fim" hidden>
+    <h2 id="fim-titulo">Fim de corrida</h2>
+    <p id="frase"></p>
+
+    <div class="numeros">
+      <div id="n-pontos"><span class="n" id="v-fim-pontos">0</span><span class="r">Pontos</span></div>
+      <div><span class="n" id="v-fim-acertos">0</span><span class="r">Acertos</span></div>
+      <div><span class="n" id="v-fim-seq">0</span><span class="r">Melhor seq.</span></div>
+    </div>
+
+    <p class="legenda" id="fim-detalhe"></p>
+
+    <div id="recorde" hidden>
+      <p>Entrou pro placar! 🏆</p>
+      <input type="text" id="nome" maxlength="10" placeholder="seu nome" autocomplete="off" />
+      <button id="b-salvar" type="button">Salvar</button>
+    </div>
+
+    <div class="linha" style="justify-content:center">
+      <button id="b-denovo" class="principal" type="button">Jogar de novo</button>
+      <button id="b-menu" type="button">Voltar ao menu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ==================================================================
+     1. Regras — porte fiel da versão em Roblox.
+     ================================================================== */
+
+  const CFG = {
+    TABUADA_INICIAL: 2, TABUADA_MAXIMA: 10, PORTOES_POR_TABUADA: 5,
+    PORTAS: 3, FATOR_MIN: 1, FATOR_MAX: 10,
+
+    PISTA_MEIA: 2000, SEG: 200, SEGMENTOS_VISIVEIS: 240,
+    ALTURA_CAMERA: 1000, PROF_CAMERA: 0.84, JOGADOR_A_FRENTE: 1100,
+    VAO: 16000, PORTA_ALTURA: 2400, PORTAO_ESPESSURA: 700,
+    CENARIO_PASSO: 800,          // em unidades de mundo, não de câmera
+
+    VEL_BASE: 3600, VEL_GANHO: 0.025, VEL_TETO: 1.7,
+    RECUO_ERRO: 0.45, PLACAR_TAM: 7,
+    CHANCE_ITEM: 0.55,
+  };
+
+  const CHAVE = "tabuada.v3";
+
+  const embaralhar = (l) => {
+    for (let i = l.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [l[i], l[j]] = [l[j], l[i]];
+    }
+    return l;
+  };
+  const inverterDigitos = (n) => { let r = 0; while (n > 0) { r = r * 10 + (n % 10); n = Math.floor(n / 10); } return r; };
+
+  const camadas = (a, b, resp) => [
+    // Linha e coluna vizinhas: a*(b±1) e (a±1)*b. De longe o erro mais comum.
+    [resp - a, resp + a, resp - b, resp + b],
+    // Somou em vez de multiplicar; inverteu os dígitos (7×8 = 56 vira 65).
+    [a + b, resp % 10 === 0 ? 0 : inverterDigitos(resp)],
+    [resp - 10, resp + 10],
+    [resp - 1, resp + 1, resp - 2, resp + 2],
+  ];
+
+  function distratores(a, b, qtd) {
+    const resp = a * b, vistos = new Set([resp]), bolsa = [];
+    for (const c of camadas(a, b, resp)) {
+      for (const v of embaralhar(c.slice())) if (v > 0 && !vistos.has(v)) { vistos.add(v); bolsa.push(v); }
+    }
+    const saida = [], usados = new Set();
+    const pegar = (f) => {
+      for (const v of bolsa) if (!usados.has(v) && (!f || f(v))) { usados.add(v); saida.push(v); return true; }
+      return false;
+    };
+    // Um abaixo e um acima da resposta: senão "chutar no maior" vence sempre.
+    if (qtd >= 2) { pegar((v) => v < resp); pegar((v) => v > resp); }
+    while (saida.length < qtd && pegar(null)) { /* completa */ }
+    let extra = 1;
+    while (saida.length < qtd) { const v = resp + extra; if (!usados.has(v)) { usados.add(v); saida.push(v); } extra++; }
+    return saida.slice(0, qtd);
+  }
+
+  function gerarPergunta(tab) {
+    const a = tab;
+    const b = CFG.FATOR_MIN + Math.floor(Math.random() * (CFG.FATOR_MAX - CFG.FATOR_MIN + 1));
+    const opcoes = distratores(a, b, CFG.PORTAS - 1);
+    opcoes.push(a * b);
+    embaralhar(opcoes);
+    return { a, b, resp: a * b, opcoes, certa: opcoes.indexOf(a * b) };
+  }
+
+  const tabuadaDo = (i) => Math.min(
+    CFG.TABUADA_INICIAL + Math.floor((Math.max(i, 1) - 1) / CFG.PORTOES_POR_TABUADA), CFG.TABUADA_MAXIMA);
+
+  let banco = new Map();
+  const perguntaDo = (i) => {
+    if (!banco.has(i)) banco.set(i, gerarPergunta(tabuadaDo(i)));
+    return banco.get(i);
+  };
+
+  /* ==================================================================
+     2. Modos
+     ================================================================== */
+
+  const MODOS = {
+    normal:        { nome: "Normal",        vidas: 3,        multi: 1,   desc: "3 vidas" },
+    sobrevivencia: { nome: "Sobrevivência", vidas: 1,        multi: 2,   desc: "1 vida só, pontos em dobro" },
+    // Treino não é enfeite: é o modo em que dá pra errar sem custo e a
+    // velocidade não sobe. É onde uma criança travada numa tabuada aprende.
+    treino:        { nome: "Treino",        vidas: Infinity, multi: 0.5, desc: "sem vidas, sem pressa" },
+  };
+
+  /* ==================================================================
+     3. Temas e paleta semântica
+     ================================================================== */
+
+  const TEMAS = {
+    dia: {
+      css: { fundo: "#eaf2fb", painel: "#ffffff", "painel-borda": "#c8d8ec", tinta: "#152238", "tinta-fraca": "#5b6b85", marca: "#e8720c" },
+      ceuTopo: "#4aa8e0", ceuBaixo: "#bfe4f7", chao: ["#79c56b", "#6fbb61"],
+      pista: ["#565f6e", "#5b6474"], faixa: "#f4f7fb", borda: ["#e8564f", "#f6f7f9"],
+      cenario: "#2f8f4e", cenarioEsc: "#256f3d", neblina: "#bfe4f7", astro: "#fff3c4",
+    },
+    noite: {
+      css: { fundo: "#0b1020", painel: "#141c31", "painel-borda": "#2a3550", tinta: "#eef3ff", "tinta-fraca": "#8d9bbd", marca: "#ffc23d" },
+      ceuTopo: "#070b18", ceuBaixo: "#26315c", chao: ["#16233d", "#131f36"],
+      pista: ["#2b3348", "#30384f"], faixa: "#e9eefb", borda: ["#ff5d8f", "#3a4666"],
+      cenario: "#1d3358", cenarioEsc: "#152743", neblina: "#26315c", astro: "#f2f6ff", estrelas: true,
+    },
+    giz: {
+      css: { fundo: "#262b33", painel: "#333945", "painel-borda": "#4a5364", tinta: "#f4f1e6", "tinta-fraca": "#a9a89f", marca: "#ffd265" },
+      ceuTopo: "#1c2027", ceuBaixo: "#3a414d", chao: ["#2f353f", "#2b313a"],
+      pista: ["#3c434f", "#414956"], faixa: "#f4f1e6", borda: ["#ff7fa8", "#f4f1e6"],
+      cenario: "#525b6b", cenarioEsc: "#454d5b", neblina: "#3a414d", astro: "#f4f1e6",
+    },
+  };
+
+  const SEMANTICA = {
+    normal: {
+      bom: "#35c46a", ruim: "#ff5d5d",
+      portoes: ["#ffc23d", "#59d98a", "#5ec8f5", "#ff86b3", "#c39cff", "#ffa15c", "#7de0d2", "#ffd98a", "#a8ea7d"],
+    },
+    // Okabe–Ito: continua distinguível em protanopia, deuteranopia e tritanopia.
+    daltonismo: {
+      bom: "#0072b2", ruim: "#d55e00",
+      portoes: ["#e69f00", "#56b4e9", "#009e73", "#f0e442", "#0072b2", "#d55e00", "#cc79a7", "#999999", "#e69f00"],
+    },
+  };
+
+  /* ==================================================================
+     4. Skins
+     ================================================================== */
+
+  const FONTE_UI = `"Segoe UI Rounded", ui-rounded, "SF Pro Rounded", "Nunito", "Trebuchet MS", system-ui, sans-serif`;
+
+  const FONTES = {
+    arredondada: { nome: "Redonda", css: FONTE_UI },
+    maquina:     { nome: "Máquina", css: `ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace` },
+    larga:       { nome: "Pesada",  css: `Impact, "Arial Black", "Haettenschweiler", sans-serif` },
+    serifada:    { nome: "Clássica", css: `Georgia, "Times New Roman", serif` },
+  };
+
+  const PORTAIS = {
+    cortina: { nome: "Cachoeira" },
+    neon:    { nome: "Neon" },
+    batente: { nome: "Bloco" },
+  };
+
+  // Traço grosso preto é o que faz qualquer coisa parecer desenho animado.
+  function contorno(ctx, r) { ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = Math.max(r * 0.13, 1.4); }
+
+  const CORREDORES = {
+    menino: {
+      nome: "Menino",
+      desenhar(ctx, r, t, cor) {
+        ctx.fillStyle = cor; contorno(ctx, r);
+        ctx.beginPath(); ctx.roundRect(-r * .62, r * .05, r * 1.24, r, r * .34); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#ffe0bd";
+        ctx.beginPath(); ctx.arc(0, -r * .5, r * .72, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#2a2118";
+        ctx.beginPath(); ctx.arc(-r * .26, -r * .58, r * .13, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(r * .26, -r * .58, r * .13, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#2a2118"; ctx.lineWidth = Math.max(r * .1, 1);
+        ctx.beginPath(); ctx.arc(0, -r * .44, r * .32, .15 * Math.PI, .85 * Math.PI); ctx.stroke();
+      },
+    },
+    carro: {
+      nome: "Carro",
+      desenhar(ctx, r, t, cor) {
+        contorno(ctx, r);
+        ctx.fillStyle = "#1d2430";
+        for (const s of [-1, 1]) { ctx.beginPath(); ctx.roundRect(s * r * .58 - r * .2, r * .3, r * .4, r * .62, r * .1); ctx.fill(); ctx.stroke(); }
+        ctx.fillStyle = cor;
+        ctx.beginPath(); ctx.roundRect(-r * .8, -r * .1, r * 1.6, r * 1.0, r * .22); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(-r * .56, -r * .78, r * 1.12, r * .78, r * .24); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#9fd8ff";
+        ctx.beginPath(); ctx.roundRect(-r * .42, -r * .64, r * .84, r * .5, r * .14); ctx.fill();
+        ctx.fillStyle = "#ff5d5d";
+        for (const s of [-1, 1]) { ctx.beginPath(); ctx.roundRect(s * r * .58 - r * .13, r * .12, r * .26, r * .18, r * .06); ctx.fill(); }
+      },
+    },
+    foguete: {
+      nome: "Foguete",
+      desenhar(ctx, r, t, cor) {
+        const chama = r * (.5 + Math.abs(Math.sin(t * 22)) * .45);
+        ctx.fillStyle = "#ffb02e";
+        ctx.beginPath(); ctx.moveTo(-r * .3, r * .8); ctx.lineTo(0, r * .8 + chama); ctx.lineTo(r * .3, r * .8); ctx.closePath(); ctx.fill();
+        contorno(ctx, r);
+        ctx.fillStyle = "#e8564f";
+        for (const s of [-1, 1]) {
+          ctx.beginPath(); ctx.moveTo(s * r * .4, r * .1); ctx.lineTo(s * r * .95, r * .8); ctx.lineTo(s * r * .4, r * .8); ctx.closePath();
+          ctx.fill(); ctx.stroke();
+        }
+        ctx.fillStyle = cor;
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 1.15); ctx.quadraticCurveTo(r * .55, -r * .2, r * .42, r * .82);
+        ctx.lineTo(-r * .42, r * .82); ctx.quadraticCurveTo(-r * .55, -r * .2, 0, -r * 1.15);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#9fd8ff";
+        ctx.beginPath(); ctx.arc(0, -r * .28, r * .27, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      },
+    },
+    // ---- os três abaixo são personagens originais, no espírito bobo do
+    // brainrot italiano, com nomes inventados. Nada copiado de meme algum.
+    bananella: {
+      nome: "Bananella Frittatini",
+      desenhar(ctx, r, t, cor) {
+        contorno(ctx, r);
+        ctx.fillStyle = "#ffffff";
+        for (const s of [-1, 1]) { ctx.beginPath(); ctx.roundRect(s * r * .42 - r * .26, r * .72, r * .52, r * .3, r * .12); ctx.fill(); ctx.stroke(); }
+        ctx.fillStyle = "#ffd93b";
+        ctx.beginPath();
+        ctx.moveTo(-r * .55, -r * .95); ctx.quadraticCurveTo(r * .95, -r * .35, r * .3, r * .8);
+        ctx.quadraticCurveTo(-r * .2, r * .3, -r * .55, -r * .95);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#2a2118";
+        ctx.beginPath(); ctx.arc(-r * .1, -r * .28, r * .1, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(r * .22, -r * .18, r * .1, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#2a2118"; ctx.lineWidth = Math.max(r * .09, 1);
+        ctx.beginPath(); ctx.arc(r * .05, -r * .02, r * .22, .1 * Math.PI, .8 * Math.PI); ctx.stroke();
+      },
+    },
+    coccodrillo: {
+      nome: "Coccodrillo Bombastico",
+      desenhar(ctx, r, t, cor) {
+        contorno(ctx, r);
+        const bate = Math.sin(t * 17) * r * .2;
+        ctx.fillStyle = "#8fd3ff";
+        for (const s of [-1, 1]) {
+          ctx.beginPath(); ctx.ellipse(s * r * .85, -r * .1 + bate * s, r * .34, r * .2, s * .5, 0, Math.PI * 2);
+          ctx.fill(); ctx.stroke();
+        }
+        ctx.fillStyle = "#4fb26a";
+        ctx.beginPath(); ctx.roundRect(-r * .72, -r * .55, r * 1.44, r * 1.3, r * .3); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#3d8f56";
+        ctx.beginPath(); ctx.roundRect(-r * .66, r * .12, r * 1.32, r * .42, r * .16); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#ffffff";
+        for (let i = 0; i < 5; i++) {
+          ctx.beginPath();
+          ctx.moveTo(-r * .58 + i * r * .29, r * .12);
+          ctx.lineTo(-r * .46 + i * r * .29, r * .38);
+          ctx.lineTo(-r * .34 + i * r * .29, r * .12);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.fillStyle = "#ffffff";
+        for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * r * .3, -r * .34, r * .19, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+        ctx.fillStyle = "#2a2118";
+        for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * r * .3, -r * .32, r * .09, 0, Math.PI * 2); ctx.fill(); }
+      },
+    },
+    cappuccino: {
+      nome: "Cappuccino Ballerino",
+      desenhar(ctx, r, t, cor) {
+        contorno(ctx, r);
+        ctx.strokeStyle = "rgba(255,255,255,.55)";
+        ctx.lineWidth = Math.max(r * .09, 1);
+        for (const s of [-1, 0, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(s * r * .28, -r * .78);
+          ctx.quadraticCurveTo(s * r * .28 + Math.sin(t * 5 + s) * r * .22, -r * 1.1, s * r * .28, -r * 1.4);
+          ctx.stroke();
+        }
+        contorno(ctx, r);
+        ctx.fillStyle = "#ffb7d5";
+        ctx.beginPath(); ctx.ellipse(0, r * .62, r * .95, r * .3, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#fbf6ee";
+        ctx.beginPath(); ctx.roundRect(-r * .62, -r * .72, r * 1.24, r * 1.3, r * .18); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#c98a4b";
+        ctx.beginPath(); ctx.ellipse(0, -r * .68, r * .58, r * .16, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#2a2118";
+        for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * r * .24, -r * .18, r * .1, 0, Math.PI * 2); ctx.fill(); }
+        ctx.strokeStyle = "#2a2118"; ctx.lineWidth = Math.max(r * .09, 1);
+        ctx.beginPath(); ctx.arc(0, -r * .06, r * .25, .12 * Math.PI, .88 * Math.PI); ctx.stroke();
+      },
+    },
+  };
+
+  const FRASES_FIM = [
+    "Mamma mia, quase!", "Bravo! Andiamo de novo?", "Che disastro… tenta outra!",
+    "Quase perfetto!", "Uno, due, tre… de novo!",
+  ];
+
+  /* ==================================================================
+     5. Poderes
+     ================================================================== */
+
+  const PODERES = {
+    escudo: { nome: "Escudo", simbolo: "🛡", cor: "#5ec8f5", desc: "segura o próximo erro" },
+    lento:  { nome: "Devagar", simbolo: "🐢", cor: "#7de0d2", desc: "pista mais lenta" },
+    dobro:  { nome: "Pontos ×2", simbolo: "✦", cor: "#ffc23d", desc: "pontos dobrados" },
+    vida:   { nome: "Vida", simbolo: "♥", cor: "#ff5d5d", desc: "uma vida a mais" },
+  };
+
+  /* ==================================================================
+     6. Som e música — sintetizados. A página publicada bloqueia
+        requisições externas, então áudio hospedado não tocaria.
+     ================================================================== */
+
+  const Audio = (() => {
+    let ctx = null, sfxOn = true, musOn = true;
+    let barSfx = null, barMus = null;
+    let motor = null;
+    let musTimer = null, prox = 0, passo = 0;
+    let ruido = null;
+
+    function acordar() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        barSfx = ctx.createGain(); barSfx.gain.value = 1; barSfx.connect(ctx.destination);
+        barMus = ctx.createGain(); barMus.gain.value = 0.5; barMus.connect(ctx.destination);
+        const n = ctx.sampleRate * 0.2;
+        ruido = ctx.createBuffer(1, n, ctx.sampleRate);
+        const d = ruido.getChannelData(0);
+        for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      }
+      if (ctx.state === "suspended") ctx.resume();
+      return ctx;
+    }
+
+    function nota(freq, dur, tipo, vol, desliza, atraso, barra) {
+      const c = acordar(); if (!c) return;
+      const t = c.currentTime + (atraso || 0);
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = tipo; o.frequency.setValueAtTime(freq, t);
+      if (desliza) o.frequency.exponentialRampToValueAtTime(Math.max(desliza, 1), t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(barra || barSfx);
+      o.start(t); o.stop(t + dur + 0.03);
+    }
+
+    const sfx = (f, d, tipo, vol, desliza, atraso) => { if (sfxOn) nota(f, d, tipo, vol, desliza, atraso, barSfx); };
+
+    /* ---- música: I–V–vi–IV, o giro mais alegre que existe ------------- */
+    const PROG = [0, 7, 9, 5];               // C  G  Am  F
+    const ARP = [0, 4, 7, 12, 7, 4];         // tríade subindo e voltando
+    const freq = (semi) => 261.63 * Math.pow(2, semi / 12);
+
+    function tocarPasso(p, quando) {
+      const compasso = Math.floor(p / 8) % PROG.length;
+      const raiz = PROG[compasso];
+      const dentro = p % 8;
+      const c = ctx;
+
+      if (dentro % 4 === 0) nota(freq(raiz - 24), 0.42, "triangle", 0.22, null, quando - c.currentTime, barMus);
+      const grau = ARP[p % ARP.length];
+      nota(freq(raiz + grau), 0.17, "square", 0.055, null, quando - c.currentTime, barMus);
+      if (dentro % 2 === 1) {
+        const f = c.createBufferSource(), g = c.createGain(), hp = c.createBiquadFilter();
+        f.buffer = ruido; hp.type = "highpass"; hp.frequency.value = 6500;
+        g.gain.setValueAtTime(0.06, quando);
+        g.gain.exponentialRampToValueAtTime(0.0001, quando + 0.05);
+        f.connect(hp).connect(g).connect(barMus);
+        f.start(quando); f.stop(quando + 0.06);
+      }
+    }
+
+    let bpm = 108;
+
+    function agendar() {
+      const c = ctx; if (!c) return;
+      const oitavo = 30 / bpm;
+      while (prox < c.currentTime + 0.25) { tocarPasso(passo, prox); prox += oitavo; passo++; }
+    }
+
+    return {
+      get sfxOn() { return sfxOn; },
+      get musOn() { return musOn; },
+      acordar,
+      alternarSfx() { sfxOn = !sfxOn; if (sfxOn) acordar(); return sfxOn; },
+      alternarMus() {
+        musOn = !musOn;
+        if (musOn) { acordar(); if (musTimer === null && emJogo) this.iniciarMusica(); }
+        else this.pararMusica();
+        return musOn;
+      },
+      clique() { sfx(620, .07, "square", .1, 880); },
+      mover()  { sfx(320, .09, "triangle", .09, 540); },
+      acerto() { [523, 659, 784].forEach((f, i) => sfx(f, .13, "triangle", .13, null, i * .065)); },
+      poder()  { [784, 988, 1319].forEach((f, i) => sfx(f, .1, "square", .1, null, i * .05)); },
+      vidaPerdida() { sfx(300, .45, "sawtooth", .16, 90); sfx(180, .5, "square", .1, 70, .04); },
+      fim()    { [392, 330, 262, 196].forEach((f, i) => sfx(f, .3, "triangle", .13, null, i * .16)); },
+      recorde() { [523, 659, 784, 1047].forEach((f, i) => sfx(f, .16, "square", .12, null, i * .09)); },
+
+      // Zunido do motor: a frequência acompanha a velocidade, então a criança
+      // ouve a pista acelerando antes de perceber pelos olhos.
+      iniciarMotor() {
+        const c = acordar(); if (!c || motor) return;
+        motor = c.createOscillator();
+        const filtro = c.createBiquadFilter(), g = c.createGain();
+        motor.type = "sawtooth"; motor.frequency.value = 62;
+        filtro.type = "lowpass"; filtro.frequency.value = 340;
+        g.gain.value = 0.03;
+        motor.connect(filtro).connect(g).connect(c.destination);
+        motor.start();
+      },
+      motorEm(razao) {
+        if (motor && ctx) motor.frequency.setTargetAtTime(52 + razao * 46, ctx.currentTime, .2);
+        bpm = 104 + razao * 34;
+      },
+      pararMotor() { if (motor) { try { motor.stop(); } catch {} motor = null; } },
+
+      iniciarMusica() {
+        const c = acordar(); if (!c || !musOn || musTimer !== null) return;
+        prox = c.currentTime + 0.08; passo = 0;
+        musTimer = setInterval(agendar, 90);
+      },
+      pararMusica() { if (musTimer !== null) { clearInterval(musTimer); musTimer = null; } },
+    };
+  })();
+
+  let emJogo = false;
+
+  /* ==================================================================
+     7. Guardado no aparelho
+     ================================================================== */
+
+  const dadosPadrao = () => ({
+    tema: null, daltonismo: false, sfx: true, musica: true, modo: "normal",
+    corredor: "menino", portal: "cortina", fonte: "arredondada", placar: [],
+  });
+  let dados = dadosPadrao();
+
+  function carregar() {
+    try {
+      const cru = localStorage.getItem(CHAVE); if (!cru) return;
+      const s = JSON.parse(cru);
+      const texto = (v, mapa) => (typeof v === "string" && mapa[v]) ? v : null;
+      dados.tema = texto(s.tema, TEMAS) || null;
+      dados.modo = texto(s.modo, MODOS) || "normal";
+      dados.corredor = texto(s.corredor, CORREDORES) || "menino";
+      dados.portal = texto(s.portal, PORTAIS) || "cortina";
+      dados.fonte = texto(s.fonte, FONTES) || "arredondada";
+      if (typeof s.daltonismo === "boolean") dados.daltonismo = s.daltonismo;
+      if (typeof s.sfx === "boolean") dados.sfx = s.sfx;
+      if (typeof s.musica === "boolean") dados.musica = s.musica;
+      if (Array.isArray(s.placar)) {
+        dados.placar = s.placar
+          .filter((e) => e && typeof e.pontos === "number" && typeof e.nome === "string")
+          .slice(0, CFG.PLACAR_TAM);
+      }
+    } catch {
+      // Aba anônima, cota cheia, JSON corrompido: joga sem guardar.
+    }
+  }
+  const guardar = () => { try { localStorage.setItem(CHAVE, JSON.stringify(dados)); } catch {} };
+
+  let T = TEMAS.dia, S = SEMANTICA.normal;
+
+  /* ==================================================================
+     8. Estado da partida
+     ================================================================== */
+
+  let estado = "menu";
+  const jogo = {
+    portao: 1, pontos: 0, acertos: 0, erros: 0, seq: 0, melhorSeq: 0,
+    vidas: 3, escudo: false, dobroAte: 0, lentoAte: 0,
+  };
+  const jogador = { z: 0, faixa: 1, x: 0, inclinacao: 0 };
+  let camX = 0, travaPortao = 0, tremor = 0, poeira = [], tempoJogo = 0;
+  let itens = new Map();   // índice do portão -> item ou null
+
+  const modoAtual = () => MODOS[dados.modo] || MODOS.normal;
+  const faixaX = (f) => (f - 1) * (CFG.PISTA_MEIA * 0.62);
+  const zDoPortao = (i) => i * CFG.VAO;
+
+  const razaoVel = () => {
+    if (dados.modo === "treino") return 0;
+    return Math.min(jogo.acertos * CFG.VEL_GANHO, CFG.VEL_TETO - 1) / (CFG.VEL_TETO - 1);
+  };
+  const velocidade = () => {
+    const base = CFG.VEL_BASE * (1 + razaoVel() * (CFG.VEL_TETO - 1));
+    return jogo.portao <= jogo.lentoAte ? base * 0.62 : base;
+  };
+
+  // Item de um portão: sorteado uma vez e guardado, senão muda de frame em
+  // frame e pisca na tela.
+  function itemDo(i) {
+    if (!itens.has(i)) {
+      let it = null;
+      if (i > 1 && Math.random() < CFG.CHANCE_ITEM) {
+        const opcoes = ["escudo", "lento", "dobro"];
+        if (modoAtual().vidas !== Infinity && jogo.vidas < modoAtual().vidas + 2) opcoes.push("vida");
+        it = { tipo: opcoes[Math.floor(Math.random() * opcoes.length)], faixa: Math.floor(Math.random() * CFG.PORTAS), pego: false };
+      }
+      itens.set(i, it);
+    }
+    return itens.get(i);
+  }
+  const zDoItem = (i) => zDoPortao(i) - CFG.VAO * 0.5;
+
+  function reiniciar() {
+    const m = modoAtual();
+    Object.assign(jogo, {
+      portao: 1, pontos: 0, acertos: 0, erros: 0, seq: 0, melhorSeq: 0,
+      vidas: m.vidas, escudo: false, dobroAte: 0, lentoAte: 0,
+    });
+    banco = new Map(); itens = new Map();
+    jogador.z = zDoPortao(1) - CFG.VAO * 0.92;
+    jogador.faixa = 1; jogador.x = faixaX(1); jogador.inclinacao = 0;
+    camX = 0; travaPortao = 0; tremor = 0; poeira = []; tempoJogo = 0;
+  }
+
+  /* ==================================================================
+     9. Projeção em perspectiva
+        Sem biblioteca 3D: a página publicada bloqueia scripts externos.
+     ================================================================== */
+
+  const cv = document.getElementById("pista");
+  const ctx = cv.getContext("2d");
+  const palco = document.getElementById("palco");
+  const semMovimento = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let L = 0, A = 0, meioY = 0;
+
+  function medir() {
+    const r = palco.getBoundingClientRect();
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    L = Math.max(r.width, 320); A = Math.max(r.height, 320);
+    cv.width = Math.round(L * dpr); cv.height = Math.round(A * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    meioY = A * 0.46;
+  }
+
+  function projetar(x, y, z, camZ) {
+    const dz = z - camZ;
+    if (dz <= 1) return null;
+    const escala = CFG.PROF_CAMERA / dz;
+    return {
+      x: L / 2 + escala * (x - camX) * L / 2,
+      y: meioY - escala * (y - CFG.ALTURA_CAMERA) * A / 2,
+      escala, w: escala * CFG.PISTA_MEIA * L / 2,
+    };
+  }
+
+  /* -------------------------------------------------------------- céu -- */
+
+  const estrelas = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.5 + .4 }));
+
+  function desenharCeu() {
+    const g = ctx.createLinearGradient(0, 0, 0, meioY + 4);
+    g.addColorStop(0, T.ceuTopo); g.addColorStop(1, T.ceuBaixo);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, L, meioY + 4);
+
+    if (T.estrelas) {
+      ctx.fillStyle = "#fff";
+      for (const e of estrelas) {
+        ctx.globalAlpha = .25 + e.r * .35;
+        ctx.beginPath(); ctx.arc(e.x * L, e.y * meioY * .9, e.r, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = T.astro; ctx.globalAlpha = .92;
+    ctx.beginPath(); ctx.arc(L * .76 - (camX / CFG.PISTA_MEIA) * L * .05, meioY * .32, Math.min(L, A) * .062, 0, Math.PI * 2);
+    ctx.fill(); ctx.globalAlpha = 1;
+  }
+
+  /* ------------------------------------------------------------ pista -- */
+
+  function quad(x1, w1, y1, x2, w2, y2, cor) {
+    ctx.fillStyle = cor;
+    ctx.beginPath();
+    ctx.moveTo(x1 - w1, y1); ctx.lineTo(x1 + w1, y1);
+    ctx.lineTo(x2 + w2, y2); ctx.lineTo(x2 - w2, y2);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function desenharPista(camZ) {
+    const base = Math.floor(camZ / CFG.SEG);
+    let ant = null;
+    for (let n = CFG.SEGMENTOS_VISIVEIS; n >= 0; n--) {
+      const idx = base + n, z = idx * CFG.SEG;
+      const p = projetar(0, 0, z, camZ);
+      if (!p) { ant = null; continue; }
+      if (ant) {
+        const par = idx % 2 === 0 ? 0 : 1;
+        ctx.fillStyle = T.chao[par];
+        ctx.beginPath();
+        ctx.moveTo(0, p.y); ctx.lineTo(L, p.y); ctx.lineTo(L, ant.y); ctx.lineTo(0, ant.y);
+        ctx.closePath(); ctx.fill();
+        // Acostamento listrado: é ele que dá a sensação de velocidade.
+        quad(p.x, p.w * 1.18, p.y, ant.x, ant.w * 1.18, ant.y, T.borda[par]);
+        quad(p.x, p.w, p.y, ant.x, ant.w, ant.y, T.pista[par]);
+        if (par === 0) {
+          for (const lado of [-1, 1]) {
+            const c = lado * 0.333;
+            quad(p.x + p.w * c, p.w * .018, p.y, ant.x + ant.w * c, ant.w * .018, ant.y, T.faixa);
+          }
+        }
+      }
+      ant = p;
+    }
+    const g = ctx.createLinearGradient(0, meioY, 0, meioY + A * .17);
+    g.addColorStop(0, T.neblina); g.addColorStop(1, "transparent");
+    ctx.fillStyle = g; ctx.fillRect(0, meioY, L, A * .17);
+  }
+
+  function desenharArvore(x, z, camZ, altura) {
+    const b = projetar(x, 0, z, camZ), t = projetar(x, altura, z, camZ);
+    if (!b || !t) return;
+    const larg = b.escala * 620 * L / 2;
+    if (larg < 1.2) return;
+    ctx.fillStyle = T.cenarioEsc;
+    ctx.fillRect(b.x - larg * .13, t.y + (b.y - t.y) * .62, larg * .26, (b.y - t.y) * .38);
+    ctx.fillStyle = T.cenario;
+    ctx.beginPath();
+    ctx.moveTo(b.x, t.y);
+    ctx.lineTo(b.x + larg * .62, t.y + (b.y - t.y) * .72);
+    ctx.lineTo(b.x - larg * .62, t.y + (b.y - t.y) * .72);
+    ctx.closePath(); ctx.fill();
+  }
+
+  /* ----------------------------------------------------------- portão -- */
+
+  function sombrear(hex, d) {
+    const n = parseInt(hex.slice(1), 16);
+    const f = (v) => Math.max(0, Math.min(255, v + d));
+    return `rgb(${f((n >> 16) & 255)},${f((n >> 8) & 255)},${f(n & 255)})`;
+  }
+
+  function desenharPortao(i, camZ, atual, t) {
+    const z = zDoPortao(i);
+    if (z < camZ + 200 || z > camZ + CFG.SEGMENTOS_VISIVEIS * CFG.SEG) return;
+
+    const q = perguntaDo(i);
+    const cor = S.portoes[(tabuadaDo(i) - CFG.TABUADA_INICIAL) % S.portoes.length];
+    const largura = CFG.PISTA_MEIA * .62;
+    const estilo = dados.portal;
+
+    for (let f = 0; f < CFG.PORTAS; f++) {
+      const cx = faixaX(f), e = cx - largura / 2, d = cx + largura / 2;
+      const eb = projetar(e, 0, z, camZ), et = projetar(e, CFG.PORTA_ALTURA, z, camZ);
+      const db = projetar(d, 0, z, camZ), dt = projetar(d, CFG.PORTA_ALTURA, z, camZ);
+      if (!eb || !et || !db || !dt) continue;
+
+      const larguraTela = Math.abs(db.x - eb.x);
+      const alturaTela = eb.y - et.y;
+
+      if (estilo === "batente") {
+        const esp = Math.max(et.escala * 150 * L / 2, 1.5);
+        const fb = projetar(e, 0, z + CFG.PORTAO_ESPESSURA, camZ);
+        const ft = projetar(e, CFG.PORTA_ALTURA, z + CFG.PORTAO_ESPESSURA, camZ);
+        if (fb && ft) {
+          ctx.fillStyle = sombrear(cor, -28);
+          ctx.beginPath();
+          ctx.moveTo(et.x, et.y); ctx.lineTo(eb.x, eb.y); ctx.lineTo(fb.x, fb.y); ctx.lineTo(ft.x, ft.y);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.fillStyle = cor;
+        ctx.fillRect(eb.x - esp / 2, et.y, esp, alturaTela);
+        ctx.fillRect(db.x - esp / 2, dt.y, esp, alturaTela);
+        ctx.fillRect(et.x - esp / 2, et.y - esp * 1.1, larguraTela + esp, esp * 1.1);
+      } else {
+        // Cortina: uma lâmina de água translúcida em vez de parede. A criança
+        // vê a pista inteira através dela, então o portão deixa de ser um
+        // obstáculo visual e vira só a decisão.
+        const g = ctx.createLinearGradient(0, et.y, 0, eb.y);
+        g.addColorStop(0, `${cor}22`);
+        g.addColorStop(.55, `${cor}66`);
+        g.addColorStop(1, `${cor}bb`);
+        ctx.fillStyle = g;
+        ctx.fillRect(eb.x, et.y, larguraTela, alturaTela);
+
+        // Fios de água descendo: dão movimento sem esconder nada.
+        ctx.strokeStyle = `${cor}aa`;
+        ctx.lineWidth = Math.max(larguraTela * .012, .8);
+        const fios = 7;
+        for (let k = 1; k < fios; k++) {
+          const fx = eb.x + (larguraTela * k) / fios;
+          const desl = ((t * (0.5 + k * 0.13)) % 1);
+          ctx.beginPath();
+          ctx.moveTo(fx, et.y + alturaTela * desl * .35);
+          ctx.lineTo(fx, et.y + alturaTela * (desl * .35 + .5));
+          ctx.stroke();
+        }
+
+        if (estilo === "neon") {
+          ctx.strokeStyle = cor;
+          ctx.lineWidth = Math.max(larguraTela * .05, 2);
+          ctx.shadowColor = cor;
+          ctx.shadowBlur = Math.max(larguraTela * .18, 6);
+          ctx.strokeRect(eb.x, et.y, larguraTela, alturaTela);
+          ctx.shadowBlur = 0;
+        } else {
+          ctx.strokeStyle = `${cor}dd`;
+          ctx.lineWidth = Math.max(larguraTela * .022, 1);
+          ctx.strokeRect(eb.x, et.y, larguraTela, alturaTela);
+        }
+      }
+
+      // Número: três limites. Escala, largura da porta (senão os três se
+      // sobrepõem ao longe) e teto de perto (senão enche a tela ao passar).
+      const tam = Math.min(et.escala * 1150 * A / 2, larguraTela * .5, A * .17);
+      if (atual && tam > 11) {
+        ctx.font = `700 ${Math.round(tam)}px ${FONTES[dados.fonte].css}`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.lineWidth = Math.max(tam * .16, 2);
+        ctx.strokeStyle = "rgba(0,0,0,.65)";
+        ctx.strokeText(String(q.opcoes[f]), (eb.x + db.x) / 2, et.y + alturaTela * .42);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(String(q.opcoes[f]), (eb.x + db.x) / 2, et.y + alturaTela * .42);
+      }
+    }
+
+    const placa = atual ? projetar(0, CFG.PORTA_ALTURA * 1.42, z, camZ) : null;
+    if (placa) {
+      const tam = Math.min(placa.escala * 1500 * A / 2, A * .13);
+      if (tam > 13) {
+        ctx.font = `700 ${Math.round(tam)}px ${FONTES[dados.fonte].css}`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.lineWidth = Math.max(tam * .15, 2);
+        ctx.strokeStyle = "rgba(0,0,0,.65)";
+        ctx.strokeText(`${q.a} × ${q.b}`, placa.x, placa.y);
+        ctx.fillStyle = cor;
+        ctx.fillText(`${q.a} × ${q.b}`, placa.x, placa.y);
+      }
+    }
+  }
+
+  /* ------------------------------------------------------------ item -- */
+
+  function desenharItem(i, camZ, t) {
+    const it = itemDo(i);
+    if (!it || it.pego) return;
+    const z = zDoItem(i);
+    if (z < camZ + 200 || z > camZ + CFG.SEGMENTOS_VISIVEIS * CFG.SEG) return;
+
+    const flutua = Math.sin(t * 3 + i) * 120;
+    const p = projetar(faixaX(it.faixa), 700 + flutua, z, camZ);
+    if (!p) return;
+    const r = p.escala * 620 * A / 2;
+    if (r < 4) return;
+
+    const poder = PODERES[it.tipo];
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Math.sin(t * 2 + i) * .16);
+    ctx.fillStyle = poder.cor;
+    ctx.strokeStyle = "rgba(0,0,0,.5)";
+    ctx.lineWidth = Math.max(r * .12, 1.2);
+    ctx.beginPath(); ctx.roundRect(-r, -r, r * 2, r * 2, r * .42); ctx.fill(); ctx.stroke();
+    ctx.font = `700 ${Math.round(r * 1.25)}px ${FONTE_UI}`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#12161f";
+    ctx.fillText(poder.simbolo, 0, r * .06);
+    ctx.restore();
+  }
+
+  /* --------------------------------------------------------- jogador -- */
+
+  function desenharJogador(camZ, t) {
+    const p = projetar(jogador.x, 0, camZ + CFG.JOGADOR_A_FRENTE, camZ);
+    if (!p) return;
+    const r = p.escala * 155 * A / 2;
+    const salto = semMovimento ? 0 : Math.abs(Math.sin(t * 9)) * r * .3;
+
+    ctx.fillStyle = "rgba(0,0,0,.28)";
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, r * .95, r * .3, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Bolha do escudo: precisa se ver de relance, no meio da corrida.
+    if (jogo.escudo) {
+      ctx.strokeStyle = PODERES.escudo.cor;
+      ctx.lineWidth = Math.max(r * .12, 2);
+      ctx.globalAlpha = .55 + Math.sin(t * 6) * .25;
+      ctx.beginPath(); ctx.arc(p.x, p.y - r * .55 - salto, r * 1.5, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.save();
+    ctx.translate(p.x, p.y - r - salto);
+    ctx.rotate(jogador.inclinacao);
+    (CORREDORES[dados.corredor] || CORREDORES.menino).desenhar(ctx, r, t, S.portoes[0]);
+    ctx.restore();
+  }
+
+  function soltarPoeira(cor, quanto) {
+    if (semMovimento) return;
+    const p = projetar(jogador.x, 0, jogador.z + CFG.JOGADOR_A_FRENTE, jogador.z);
+    if (!p) return;
+    for (let i = 0; i < quanto; i++) {
+      poeira.push({
+        x: p.x, y: p.y - Math.random() * 40,
+        vx: (Math.random() - .5) * 420, vy: -Math.random() * 320,
+        vida: 1, cor, r: 2 + Math.random() * 5,
+      });
+    }
+  }
+
+  function desenharPoeira(dt) {
+    poeira = poeira.filter((p) => p.vida > 0);
+    for (const p of poeira) {
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 700 * dt; p.vida -= dt * 1.5;
+      ctx.globalAlpha = Math.max(p.vida, 0) * .9;
+      ctx.fillStyle = p.cor;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ------------------------------------------------------------ cena -- */
+
+  function desenharCena(t) {
+    const camZ = jogador.z;
+    ctx.clearRect(0, 0, L, A);
+    ctx.save();
+    if (tremor > 0) ctx.translate((Math.random() - .5) * tremor * 26, (Math.random() - .5) * tremor * 26);
+
+    desenharCeu();
+    desenharPista(camZ);
+
+    // Cenário ancorado em MÚLTIPLOS FIXOS do mundo. Antes o passo saía do
+    // índice da câmera, então o conjunto de árvores mudava a cada quadro e
+    // elas piscavam.
+    const objetos = [];
+    const passo = CFG.CENARIO_PASSO;
+    const primeiro = Math.ceil(camZ / passo) * passo;
+    const ultimo = camZ + CFG.SEGMENTOS_VISIVEIS * CFG.SEG;
+    for (let z = primeiro; z <= ultimo; z += passo) {
+      const k = Math.round(z / passo);
+      const lado = k % 2 === 0 ? -1 : 1;
+      const dist = CFG.PISTA_MEIA * (1.55 + (k % 3) * .32);
+      const alt = 1500 + (k % 5) * 420;
+      objetos.push({ z, desenhar: () => desenharArvore(lado * dist, z, camZ, alt) });
+    }
+
+    const pi = Math.max(1, Math.floor(camZ / CFG.VAO));
+    for (let i = pi; i <= pi + 3; i++) {
+      objetos.push({ z: zDoPortao(i), desenhar: () => desenharPortao(i, camZ, i === jogo.portao, t) });
+      objetos.push({ z: zDoItem(i), desenhar: () => desenharItem(i, camZ, t) });
+    }
+
+    objetos.sort((a, b) => b.z - a.z);
+    for (const o of objetos) o.desenhar();
+
+    desenharJogador(camZ, t);
+    ctx.restore();
+  }
+
+  /* ==================================================================
+     10. Painel
+     ================================================================== */
+
+  const el = (id) => document.getElementById(id);
+  const painel = el("painel"), canto = el("canto"), dano = el("dano");
+  const elVidas = el("vidas"), fVidas = el("f-vidas");
+  const flash = el("flash"), flashConta = el("flash-conta"), flashNota = el("flash-nota");
+
+  function pintarVidas(perdeu) {
+    const m = modoAtual();
+    if (m.vidas === Infinity) {
+      fVidas.classList.add("infinito");
+      elVidas.innerHTML = `<span class="cor" style="color:var(--marca)">∞</span>`;
+      return;
+    }
+    fVidas.classList.remove("infinito");
+    const total = Math.max(m.vidas, jogo.vidas);
+    elVidas.innerHTML = "";
+    for (let i = 0; i < total; i++) {
+      const s = document.createElement("span");
+      s.className = "cor";
+      s.textContent = "♥";
+      if (i >= jogo.vidas) {
+        s.classList.add("gasta");
+        if (perdeu && i === jogo.vidas) s.classList.add("quebrando");
+      }
+      elVidas.appendChild(s);
+    }
+  }
+
+  function pintarPainel(perdeu) {
+    el("v-tabuada").textContent = tabuadaDo(jogo.portao);
+    el("v-pontos").textContent = jogo.pontos;
+    el("v-seq").textContent = jogo.seq;
+    el("f-seq").classList.toggle("quente", jogo.seq >= 3);
+    pintarVidas(perdeu);
+
+    const razao = razaoVel();
+    el("v-vel").textContent = Math.round(60 + razao * 90 * (jogo.portao <= jogo.lentoAte ? .6 : 1));
+    el("barra-vel").firstElementChild.style.width = `${Math.round(12 + razao * 88)}%`;
+
+    const ativo =
+      jogo.escudo ? "escudo" :
+      jogo.portao <= jogo.dobroAte ? "dobro" :
+      jogo.portao <= jogo.lentoAte ? "lento" : null;
+    const fb = el("f-boost");
+    if (ativo) {
+      fb.hidden = false;
+      el("v-boost-r").textContent = PODERES[ativo].nome;
+      el("v-boost").textContent = PODERES[ativo].simbolo;
+      fb.style.borderColor = PODERES[ativo].cor;
+      fb.style.color = PODERES[ativo].cor;
+    } else fb.hidden = true;
+  }
+
+  let fichaFlash = 0;
+  function mostrarFlash(conta, nota, cor, seg) {
+    fichaFlash++;
+    const minha = fichaFlash;
+    flashConta.textContent = conta;
+    flashNota.textContent = nota;
+    // A cor vai no quadro inteiro, mas nunca sozinha: símbolo e palavra
+    // dizem a mesma coisa.
+    flash.style.color = cor;
+    flash.classList.add("visivel");
+    setTimeout(() => { if (minha === fichaFlash) flash.classList.remove("visivel"); }, seg * 1000);
+  }
+
+  /* ==================================================================
+     11. Julgamento
+     ================================================================== */
+
+  function pegarItem(i) {
+    const it = itemDo(i);
+    if (!it || it.pego || it.faixa !== jogador.faixa) return;
+    it.pego = true;
+    Audio.poder();
+    soltarPoeira(PODERES[it.tipo].cor, 18);
+    if (it.tipo === "escudo") jogo.escudo = true;
+    else if (it.tipo === "dobro") jogo.dobroAte = jogo.portao + 3;
+    else if (it.tipo === "lento") jogo.lentoAte = jogo.portao + 2;
+    else if (it.tipo === "vida" && modoAtual().vidas !== Infinity) jogo.vidas++;
+    mostrarFlash(PODERES[it.tipo].simbolo, `${PODERES[it.tipo].nome} — ${PODERES[it.tipo].desc}`, PODERES[it.tipo].cor, 1.1);
+    pintarPainel(false);
+  }
+
+  function avaliar(i) {
+    const q = perguntaDo(i);
+    const acertou = jogador.faixa === q.certa;
+    const conta = `${q.a} × ${q.b} = ${q.resp}`;
+
+    if (acertou) {
+      jogo.acertos++; jogo.seq++;
+      jogo.melhorSeq = Math.max(jogo.melhorSeq, jogo.seq);
+      const dobro = jogo.portao <= jogo.dobroAte ? 2 : 1;
+      jogo.pontos += Math.round((10 + Math.min(jogo.seq, 10) * 2) * modoAtual().multi * dobro);
+      jogo.portao = i + 1;
+      soltarPoeira(S.bom, 30);
+      Audio.acerto();
+      // No acerto o texto é a própria conta, não um "Boa!": ver o resultado
+      // escrito logo depois de resolver ajuda a fixar.
+      mostrarFlash(conta, "✓ Isso!", S.bom, .85);
+      pintarPainel(false);
+      return;
+    }
+
+    jogo.erros++; jogo.seq = 0;
+
+    if (jogo.escudo) {
+      jogo.escudo = false;
+      Audio.poder();
+      mostrarFlash(conta, "🛡 O escudo segurou essa", PODERES.escudo.cor, 1.9);
+      jogador.z = Math.max(zDoPortao(i) - CFG.VAO * CFG.RECUO_ERRO, zDoPortao(i) - CFG.VAO + 400);
+      travaPortao = 0;
+      pintarPainel(false);
+      return;
+    }
+
+    const temVidas = modoAtual().vidas !== Infinity;
+    if (temVidas) jogo.vidas--;
+    if (!semMovimento) { tremor = .75; dano.classList.remove("bate"); void dano.offsetWidth; dano.classList.add("bate"); }
+    soltarPoeira(S.ruim, 34);
+
+    if (temVidas && jogo.vidas <= 0) {
+      Audio.fim();
+      mostrarFlash(conta, "✕ A resposta era essa", S.ruim, 1.6);
+      pintarPainel(true);
+      setTimeout(terminar, 1000);
+      return;
+    }
+
+    Audio.vidaPerdida();
+    // O erro fica MAIS tempo na tela que o acerto, de propósito. Com 3 portas,
+    // errar duas vezes garantiria o acerto por eliminação — o que impede isso
+    // é a criança voltar tendo lido a conta resolvida.
+    mostrarFlash(conta, "✕ A resposta é essa", S.ruim, 2.0);
+    jogador.z = Math.max(zDoPortao(i) - CFG.VAO * CFG.RECUO_ERRO, zDoPortao(i) - CFG.VAO + 400);
+    travaPortao = 0;
+    pintarPainel(temVidas);
+  }
+
+  /* ==================================================================
+     12. Laço
+     ================================================================== */
+
+  let ultimo = 0, animando = false;
+
+  function quadro(agora) {
+    const dt = Math.min((agora - ultimo) / 1000, .05);
+    ultimo = agora;
+
+    if (estado === "jogando") {
+      tempoJogo += dt;
+      jogador.z += velocidade() * dt;
+      Audio.motorEm(razaoVel());
+
+      const antes = jogador.x;
+      jogador.x += (faixaX(jogador.faixa) - jogador.x) * Math.min(dt * 9, 1);
+      const desl = (jogador.x - antes) / Math.max(dt, .001);
+      const alvoInc = Math.max(-.3, Math.min(.3, -desl / 9000));
+      jogador.inclinacao += (alvoInc - jogador.inclinacao) * Math.min(dt * 8, 1);
+      camX += (jogador.x * .55 - camX) * Math.min(dt * 4, 1);
+
+      const alvo = jogo.portao;
+      if (jogador.z >= zDoItem(alvo)) pegarItem(alvo);
+      if (travaPortao !== alvo && jogador.z >= zDoPortao(alvo) + CFG.PORTAO_ESPESSURA) {
+        travaPortao = alvo;
+        avaliar(alvo);
+      }
+    } else {
+      tempoJogo += dt;   // menu continua com a cena viva
+    }
+
+    if (tremor > 0) tremor = Math.max(tremor - dt * 2.2, 0);
+    desenharCena(tempoJogo);
+    if (estado === "jogando" || poeira.length) desenharPoeira(dt);
+    if (animando) requestAnimationFrame(quadro);
+  }
+
+  function ligarLaco() {
+    if (animando) return;
+    animando = true; ultimo = performance.now();
+    requestAnimationFrame(quadro);
+  }
+
+  /* ==================================================================
+     13. Telas
+     ================================================================== */
+
+  const telaMenu = el("menu"), telaFim = el("fim");
+
+  function irParaMenu() {
+    estado = "menu"; emJogo = false;
+    Audio.pararMotor(); Audio.pararMusica();
+    telaMenu.hidden = false; telaFim.hidden = true;
+    painel.classList.remove("ativo"); canto.classList.remove("ativo");
+    flash.classList.remove("visivel");
+    reiniciar(); pintarPlacar(); ligarLaco();
+  }
+
+  function jogar() {
+    reiniciar();
+    estado = "jogando"; emJogo = true;
+    telaMenu.hidden = true; telaFim.hidden = true;
+    painel.classList.add("ativo"); canto.classList.add("ativo");
+    pintarPainel(false);
+    Audio.acordar(); Audio.iniciarMotor(); Audio.iniciarMusica();
+    ligarLaco();
+  }
+
+  function terminar() {
+    estado = "fim"; emJogo = false;
+    Audio.pararMotor(); Audio.pararMusica();
+    painel.classList.remove("ativo"); canto.classList.remove("ativo");
+    flash.classList.remove("visivel");
+
+    el("v-fim-pontos").textContent = jogo.pontos;
+    el("v-fim-acertos").textContent = jogo.acertos;
+    el("v-fim-seq").textContent = jogo.melhorSeq;
+    el("fim-detalhe").textContent = `Modo ${modoAtual().nome} — você chegou na tabuada do ${tabuadaDo(jogo.portao)}, no portão ${jogo.portao}.`;
+    el("fim-titulo").textContent = jogo.acertos === 0 ? "Quase!" : "Fim de corrida";
+    el("frase").textContent = FRASES_FIM[Math.floor(Math.random() * FRASES_FIM.length)];
+
+    const entra = jogo.pontos > 0 && (
+      dados.placar.length < CFG.PLACAR_TAM || jogo.pontos > dados.placar[dados.placar.length - 1].pontos);
+    el("recorde").hidden = !entra;
+    if (entra) { el("nome").value = ""; Audio.recorde(); }
+    telaFim.hidden = false;
+  }
+
+  function pintarPlacar(destaque = -1) {
+    const ol = el("placar");
+    ol.innerHTML = "";
+    if (!dados.placar.length) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="vazio">Nenhuma corrida ainda. A primeira é sua.</span>`;
+      ol.appendChild(li);
+      return;
+    }
+    dados.placar.forEach((e, i) => {
+      const li = document.createElement("li");
+      if (i === destaque) li.classList.add("destaque");
+      li.innerHTML = `<span class="pos">${["🥇","🥈","🥉"][i] || (i + 1)}</span><span class="nome"></span><span class="modo"></span><span class="pts">${e.pontos}</span>`;
+      // textContent: é texto digitado por quem usa.
+      li.querySelector(".nome").textContent = e.nome;
+      li.querySelector(".modo").textContent = (MODOS[e.modo] || MODOS.normal).nome;
+      ol.appendChild(li);
+    });
+  }
+
+  function salvarNoPlacar() {
+    const nome = (el("nome").value || "").trim().slice(0, 10) || "Anônimo";
+    const entrada = { nome, pontos: jogo.pontos, modo: dados.modo };
+    dados.placar.push(entrada);
+    dados.placar.sort((a, b) => b.pontos - a.pontos);
+    dados.placar = dados.placar.slice(0, CFG.PLACAR_TAM);
+    guardar();
+    pintarPlacar(dados.placar.indexOf(entrada));
+    el("recorde").hidden = true;
+    Audio.clique();
+  }
+
+  /* ==================================================================
+     14. Menu: modos, skins, tema
+     ================================================================== */
+
+  const preview = el("preview");
+  const pctx = preview.getContext("2d");
+
+  function pintarPreview() {
+    pctx.setTransform(1, 0, 0, 1, 0, 0);
+    pctx.clearRect(0, 0, preview.width, preview.height);
+    pctx.save();
+    pctx.translate(preview.width / 2, preview.height / 2 + 24);
+    (CORREDORES[dados.corredor] || CORREDORES.menino).desenhar(pctx, 62, tempoJogo, S.portoes[0]);
+    pctx.restore();
+  }
+
+  function montarBotoes(container, mapa, atual, aoEscolher) {
+    container.innerHTML = "";
+    for (const [chave, def] of Object.entries(mapa)) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = def.nome;
+      b.setAttribute("aria-pressed", String(chave === atual()));
+      b.addEventListener("click", () => {
+        aoEscolher(chave);
+        guardar(); Audio.clique();
+        container.querySelectorAll("button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+      });
+      container.appendChild(b);
+    }
+  }
+
+  function montarModos() {
+    const c = el("modos");
+    c.innerHTML = "";
+    for (const [chave, m] of Object.entries(MODOS)) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.innerHTML = `<span class="mt"></span><span class="md"></span>`;
+      b.querySelector(".mt").textContent = m.nome;
+      b.querySelector(".md").textContent = m.desc;
+      b.setAttribute("aria-pressed", String(chave === dados.modo));
+      b.addEventListener("click", () => {
+        dados.modo = chave; guardar(); Audio.clique();
+        c.querySelectorAll("button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+      });
+      c.appendChild(b);
+    }
+  }
+
+  function aplicarTema() {
+    T = TEMAS[dados.tema] || TEMAS.dia;
+    S = dados.daltonismo ? SEMANTICA.daltonismo : SEMANTICA.normal;
+    const raiz = document.documentElement.style;
+    for (const [k, v] of Object.entries(T.css)) raiz.setProperty(`--${k}`, v);
+    raiz.setProperty("--bom", S.bom);
+    raiz.setProperty("--ruim", S.ruim);
+    document.querySelectorAll(".temaBtn").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tema === dados.tema)));
+    const bd = el("b-daltonismo");
+    bd.setAttribute("aria-pressed", String(dados.daltonismo));
+    bd.textContent = dados.daltonismo ? "Daltonismo ligado" : "Modo daltonismo";
+    pintarPreview();
+  }
+
+  /* ==================================================================
+     15. Comandos
+     ================================================================== */
+
+  function irPara(f) {
+    const novo = Math.max(0, Math.min(CFG.PORTAS - 1, f));
+    if (novo !== jogador.faixa) { jogador.faixa = novo; Audio.mover(); }
+  }
+
+  addEventListener("keydown", (ev) => {
+    if (estado !== "jogando") {
+      if ((ev.key === "Enter" || ev.key === " ") && !telaMenu.hidden) { ev.preventDefault(); Audio.clique(); jogar(); }
+      return;
+    }
+    if (ev.key === "ArrowLeft" || ev.key === "a" || ev.key === "A") { irPara(jogador.faixa - 1); ev.preventDefault(); }
+    else if (ev.key === "ArrowRight" || ev.key === "d" || ev.key === "D") { irPara(jogador.faixa + 1); ev.preventDefault(); }
+    else if (ev.key >= "1" && ev.key <= String(CFG.PORTAS)) irPara(Number(ev.key) - 1);
+    else if (ev.key === "Escape") irParaMenu();
+  });
+
+  palco.addEventListener("pointerdown", (ev) => {
+    if (estado !== "jogando") return;
+    const r = palco.getBoundingClientRect();
+    irPara(Math.floor(((ev.clientX - r.left) / r.width) * CFG.PORTAS));
+  });
+
+  addEventListener("resize", medir);
+
+  el("b-jogar").addEventListener("click", () => { Audio.clique(); jogar(); });
+  el("b-denovo").addEventListener("click", () => { Audio.clique(); jogar(); });
+  el("b-menu").addEventListener("click", () => { Audio.clique(); irParaMenu(); });
+  el("b-sair").addEventListener("click", () => { Audio.clique(); irParaMenu(); });
+  el("b-salvar").addEventListener("click", salvarNoPlacar);
+  el("nome").addEventListener("keydown", (ev) => { if (ev.key === "Enter") salvarNoPlacar(); });
+
+  document.querySelectorAll(".temaBtn").forEach((b) => {
+    b.addEventListener("click", () => { dados.tema = b.dataset.tema; guardar(); Audio.clique(); aplicarTema(); });
+  });
+
+  el("b-daltonismo").addEventListener("click", () => {
+    dados.daltonismo = !dados.daltonismo; guardar(); Audio.clique(); aplicarTema();
+  });
+
+  function pintarAudio() {
+    for (const b of [el("b-sfx"), el("b-sfx-jogo")]) {
+      b.setAttribute("aria-pressed", String(Audio.sfxOn));
+      if (b.id === "b-sfx") b.textContent = Audio.sfxOn ? "Efeitos" : "Efeitos mudos";
+    }
+    for (const b of [el("b-mus"), el("b-mus-jogo")]) {
+      b.setAttribute("aria-pressed", String(Audio.musOn));
+      if (b.id === "b-mus") b.textContent = Audio.musOn ? "Música" : "Música muda";
+    }
+  }
+
+  for (const b of [el("b-sfx"), el("b-sfx-jogo")]) {
+    b.addEventListener("click", () => { dados.sfx = Audio.alternarSfx(); guardar(); Audio.clique(); pintarAudio(); });
+  }
+  for (const b of [el("b-mus"), el("b-mus-jogo")]) {
+    b.addEventListener("click", () => { dados.musica = Audio.alternarMus(); guardar(); pintarAudio(); });
+  }
+
+  el("b-limpar").addEventListener("click", () => { dados.placar = []; guardar(); Audio.clique(); pintarPlacar(); });
+
+  /* ==================================================================
+     16. Partida
+     ================================================================== */
+
+  carregar();
+  if (!dados.tema) dados.tema = matchMedia("(prefers-color-scheme: dark)").matches ? "noite" : "dia";
+  if (!dados.sfx) Audio.alternarSfx();
+  if (!dados.musica) Audio.alternarMus();
+
+  medir();
+  montarModos();
+  montarBotoes(el("skins-corredor"), CORREDORES, () => dados.corredor, (k) => { dados.corredor = k; pintarPreview(); });
+  montarBotoes(el("skins-portal"), PORTAIS, () => dados.portal, (k) => { dados.portal = k; });
+  montarBotoes(el("skins-fonte"), FONTES, () => dados.fonte, (k) => { dados.fonte = k; });
+  aplicarTema();
+  pintarAudio();
+  reiniciar();
+  pintarPlacar();
+  ligarLaco();
+})();
+</script>
+</body>
+</html>

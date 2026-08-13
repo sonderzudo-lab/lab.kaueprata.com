@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Apps · Kauê Prata</title>
+  <meta name="description" content="Aplicativos, jogos e experimentos desenvolvidos por Kauê Prata.">
+  <meta name="author" content="Kauê Prata">
+  <meta name="theme-color" content="#0A0A0B">
+  <link rel="canonical" href="https://apps.kaueprata.com/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Apps · Kauê Prata">
+  <meta property="og:url" content="https://apps.kaueprata.com/">
+  <meta property="og:title" content="Apps · Kauê Prata">
+  <meta property="og:description" content="Aplicativos, jogos e experimentos desenvolvidos por Kauê Prata.">
+  <meta property="og:locale" content="pt_BR">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Apps · Kauê Prata">
+  <meta name="twitter:description" content="Aplicativos, jogos e experimentos desenvolvidos por Kauê Prata.">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/site.css">
+  <noscript><style>.app-list{display:none}.noscript-app{display:block}</style></noscript>
+</head>
+<body>
+  <a class="skip" href="#apps">pular para os apps</a>
+
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Apps de Kauê Prata">k.prata · apps</a>
+    <a class="back-home" href="https://kaueprata.com/">site principal <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-field" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <p class="kicker">// laboratório</p>
+        <h1 id="hero-title">Apps &amp;<br>projetos.</h1>
+        <p class="hero-line">Jogos, exercícios e pequenos sistemas que saíram da ideia e chegaram ao navegador.</p>
+        <a class="hero-link" href="#apps">explorar projetos <span aria-hidden="true">↓</span></a>
+      </div>
+    </section>
+
+    <section class="section" id="apps" aria-labelledby="apps-title">
+      <div class="section-row">
+        <div class="section-heading">
+          <h2 class="section-label" id="apps-title">01&nbsp;&nbsp;projetos</h2>
+          <span class="app-count" id="app-count" aria-live="polite">carregando</span>
+        </div>
+
+        <div class="section-body">
+          <div class="toolbar">
+            <label for="app-search">encontrar um app</label>
+            <div class="search-wrap">
+              <input id="app-search" type="search" placeholder="buscar por nome ou tecnologia" autocomplete="off">
+              <span class="search-key" aria-hidden="true">/</span>
+            </div>
+          </div>
+
+          <div class="app-list" id="app-list"></div>
+
+          <p class="empty" id="empty" hidden>Nenhum projeto encontrado.</p>
+
+          <div class="noscript-app">
+            <article class="app-card">
+              <a class="app-card-link" href="/tabuada/">
+                <div class="app-topline"><span>001</span><span class="status">disponível</span></div>
+                <h3>Corrida da Tabuada</h3>
+                <p>Um jogo de corrida para praticar multiplicação escolhendo a porta com o resultado certo.</p>
+                <span class="open-app">abrir app ↗</span>
+              </a>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section note" aria-labelledby="about-title">
+      <div class="section-row">
+        <h2 class="section-label" id="about-title">02&nbsp;&nbsp;sobre</h2>
+        <div class="section-body note-body">
+          <p>Este é meu espaço para publicar trabalhos de aula, protótipos e experimentos. Cada projeto fica disponível em uma rota própria e continua acessível pelo mesmo endereço.</p>
+          <a href="https://kaueprata.com/">mais sobre mim <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 Kauê Prata · São Paulo, BR</p>
+    <span>construído para experimentar</span>
+  </footer>
+
+  <script src="/assets/apps.js" defer></script>
+  <script src="/assets/site.js" defer></script>
+</body>
+</html>
