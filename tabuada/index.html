@@ -166,8 +166,8 @@
   }
   .tela[hidden] { display: none; }
 
-  .menu-shell { display: grid; gap: 16px; width: min(100%, 920px); margin-inline: auto; }
-  .menu-top { display: grid; justify-items: center; gap: 9px; padding: 2px 0 8px; }
+  .menu-shell { display: grid; gap: 16px; width: min(100%, 1080px); margin-inline: auto; }
+  .menu-top { display: grid; justify-items: center; gap: 7px; padding: 2px 0 6px; }
   .menu-topline { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; }
   .voltar-lab { color: var(--tinta-fraca); font-size: 12px; text-decoration: none; }
   .voltar-lab:hover { color: var(--marca); }
@@ -190,7 +190,7 @@
   }
 
   .cartao {
-    width: min(100%, 920px); padding: clamp(14px, 2.6vw, 20px);
+    width: min(100%, 1080px); padding: clamp(14px, 2.6vw, 20px);
     border: 2px solid var(--painel-borda); border-radius: 18px;
     background: color-mix(in srgb, var(--painel) 80%, transparent); text-align: left;
   }
@@ -213,7 +213,9 @@
     background: linear-gradient(145deg, color-mix(in srgb, var(--painel) 92%, transparent), color-mix(in srgb, var(--marca) 8%, var(--painel)));
     box-shadow: 0 22px 70px rgba(0,0,0,.16); text-align: left;
   }
-  .setup-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(240px, .9fr); gap: 22px; }
+  .setup-layout { display: grid; grid-template-columns: minmax(0, 1.28fr) minmax(310px, .72fr); gap: clamp(18px, 3vw, 30px); align-items: stretch; }
+  .setup-config { display: grid; align-content: center; gap: 18px; min-width: 0; }
+  .setup-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
   .setup-bloco { min-width: 0; }
   .setup-bloco h2 { margin-bottom: 9px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-fraca); }
   .niveis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
@@ -222,19 +224,25 @@
   .niveis .jornada small { color: var(--tinta-fraca); font-weight: 500; }
 
   /* Modos: escolhas curtas, sem transformar a abertura num painel de controle. */
-  #modos { display: grid; grid-template-columns: 1fr; gap: 7px; width: 100%; }
+  #modos { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; width: 100%; }
   #modos button { display: grid; gap: 3px; padding: 12px 10px; border-radius: 15px; text-align: center; }
   #modos .mt { font-size: clamp(14px, 2vw, 16px); font-weight: 700; }
   #modos .md { font-size: 11px; font-weight: 500; color: var(--tinta-fraca); line-height: 1.3; }
   #modos button[aria-pressed="true"] .md { color: inherit; }
 
   .resumo-partida {
-    display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 13px;
+    display: grid; gap: 4px; padding: 10px 12px; border-radius: 13px;
     background: color-mix(in srgb, var(--fundo) 42%, transparent); color: var(--tinta-fraca); font-size: 12px;
   }
   .resumo-partida strong { color: var(--tinta); }
-  .menu-actions { display: grid; justify-items: center; gap: 7px; }
+  .menu-actions { display: grid; justify-items: stretch; gap: 7px; }
+  .menu-actions .principal { width: 100%; }
   .menu-actions small { color: var(--tinta-fraca); }
+
+  .largada-card { display: grid; align-content: start; gap: 11px; min-width: 0; padding: 12px; border: 1px solid color-mix(in srgb, var(--painel-borda) 78%, transparent); border-radius: 20px; background: color-mix(in srgb, var(--fundo) 40%, transparent); }
+  .largada-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 3px; }
+  .largada-topo strong { font: 800 11px var(--display); letter-spacing: .12em; text-transform: uppercase; }
+  .largada-topo span { color: var(--marca); font: 700 10px var(--display); }
 
   details.cartao { padding: 0; }
   details.cartao > summary {
@@ -246,14 +254,30 @@
   details.cartao[open] > summary::after { content: "−"; }
   details.cartao > summary span { color: var(--tinta-fraca); font: 500 11px var(--corpo); }
   .detalhe-corpo { padding: 0 18px 18px; border-top: 1px solid var(--painel-borda); }
-  .custom-grid { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 20px; padding-top: 16px; }
+  .custom-grid { display: grid; grid-template-columns: minmax(270px,.78fr) minmax(0,1.22fr); gap: 20px; padding-top: 16px; }
   #previa {
-    display: grid; place-items: center; align-self: start; min-height: 210px; border-radius: 18px;
+    position: relative; display: grid; place-items: center; min-height: 230px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--painel-borda) 75%, transparent); border-radius: 16px;
     background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--marca) 20%, transparent), transparent 62%);
   }
-  canvas#preview { width: 190px; height: 190px; }
+  canvas#preview { display: block; width: 100%; height: auto; aspect-ratio: 1.53; }
+  .preview-legenda { position: absolute; inset: auto 8px 8px; display: grid; gap: 2px; padding: 8px 10px; border-radius: 11px; background: color-mix(in srgb, var(--fundo) 82%, transparent); box-shadow: 0 5px 20px rgba(0,0,0,.24); backdrop-filter: blur(7px); pointer-events: none; }
+  .preview-legenda strong { font: 800 11px var(--display); color: var(--tinta); }
+  .preview-legenda span { overflow: hidden; color: var(--tinta-fraca); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+  .previa-custom { position: sticky; top: 12px; align-self: start; overflow: hidden; border: 1px solid color-mix(in srgb, var(--painel-borda) 75%, transparent); border-radius: 16px; background: color-mix(in srgb, var(--fundo) 46%, transparent); }
+  .previa-custom header { display: flex; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--painel-borda); }
+  .previa-custom strong { font: 800 11px var(--display); text-transform: uppercase; letter-spacing: .08em; }
+  .previa-custom span { color: var(--tinta-fraca); font-size: 9px; }
+  canvas#preview-custom { display: block; width: 100%; height: auto; }
   .opcoes-visuais { min-width: 0; }
-  .opcoes-visuais .linha button { position: relative; }
+  .opcoes-visuais .linha { display: grid; grid-template-columns: repeat(auto-fill,minmax(132px,1fr)); gap: 7px; }
+  .opcoes-visuais .linha button { position: relative; display: grid; grid-template-columns: 42px minmax(0,1fr); align-items: center; gap: 9px; min-height: 52px; padding: 5px 10px 5px 6px; border-radius: 14px; text-align: left; }
+  .skin-mini { position: relative; display: grid; place-items: center; width: 40px; height: 38px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--painel-borda) 80%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--fundo) 46%, transparent); color: var(--mini-cor,var(--marca)); font-size: 18px; }
+  .skin-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  [data-grupo="skins-pista"] .skin-mini::before { content:""; position:absolute; inset: 7px 9px -7px; clip-path: polygon(37% 0,63% 0,100% 100%,0 100%); background: var(--mini-a,#454d60); border-inline: 2px solid var(--mini-b,#fff); }
+  [data-grupo="skins-portal"] .skin-mini::before { content:""; position:absolute; inset: 7px 8px 5px; border: 3px solid currentColor; border-bottom-width: 1px; border-radius: 6px 6px 2px 2px; box-shadow: inset 0 0 9px currentColor; }
+  [data-grupo="skins-tema"] .skin-mini { background: linear-gradient(145deg,var(--mini-a),var(--mini-b)); }
+  [data-grupo="skins-cenario"] .skin-mini { font-size: 21px; }
+  [data-grupo="skins-corredor"] .skin-mini { font: 900 14px var(--display); }
   .config-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .7fr); gap: 20px; padding-top: 16px; }
   .ajustes { align-content: start; }
 
@@ -397,13 +421,15 @@
     .menu-shell { gap: 12px; }
     .menu-topline { align-items: flex-start; }
     .menu-top h1 { font-size: clamp(38px, 12vw, 54px); }
-    .setup-grid, .custom-grid, .config-grid { grid-template-columns: 1fr; }
+    .setup-layout, .setup-grid, .custom-grid, .config-grid { grid-template-columns: 1fr; }
     #modos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     #modos button { padding-inline: 5px; }
     #modos .md { font-size: 9.5px; }
     .niveis { grid-template-columns: repeat(5, 1fr); }
-    #previa { min-height: 176px; }
-    canvas#preview { width: 165px; height: 165px; }
+    #previa { min-height: 210px; }
+    canvas#preview { width: 100%; height: auto; }
+    .opcoes-visuais .linha { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .previa-custom { position: relative; top: auto; }
     .resultado-shell { padding: 21px 14px 16px; border-radius: 22px; }
     #fim { align-content: start; }
     .resultado-cabecalho { grid-template-columns: auto 1fr; gap: 11px; }
@@ -523,27 +549,41 @@
 
       <section class="setup-card" aria-labelledby="titulo-preparar">
         <h2 class="sr-only" id="titulo-preparar">Preparar corrida</h2>
-        <div class="setup-grid">
-          <div class="setup-bloco">
-            <h2>O que vamos treinar?</h2>
-            <div class="niveis" id="niveis"></div>
+        <div class="setup-layout">
+          <div class="setup-config">
+            <div class="setup-grid">
+              <div class="setup-bloco">
+                <h2>1 · Escolha o treino</h2>
+                <div class="niveis" id="niveis"></div>
+              </div>
+              <div class="setup-bloco">
+                <h2>2 · Defina o ritmo</h2>
+                <div id="modos"></div>
+              </div>
+            </div>
           </div>
-          <div class="setup-bloco">
-            <h2>Ritmo da corrida</h2>
-            <div id="modos"></div>
-          </div>
-        </div>
-        <div class="resumo-partida" id="resumo-partida"></div>
-        <div class="menu-actions">
-          <button id="b-jogar" class="principal" type="button">Começar corrida</button>
-          <small>Use ← →, 1 2 3 ou toque em uma pista</small>
+          <aside class="largada-card" aria-label="Prévia e largada">
+            <div class="largada-topo"><strong>Sua garagem</strong><span>prévia ao vivo</span></div>
+            <div id="previa">
+              <canvas id="preview" width="520" height="340" aria-label="Prévia completa da corrida selecionada"></canvas>
+              <div class="preview-legenda"><strong id="preview-titulo">Corrida personalizada</strong><span id="preview-detalhes"></span></div>
+            </div>
+            <div class="resumo-partida" id="resumo-partida"></div>
+            <div class="menu-actions">
+              <button id="b-jogar" class="principal" type="button">Ir para a largada</button>
+              <small>← →, 1 2 3 ou toque em uma pista</small>
+            </div>
+          </aside>
         </div>
       </section>
 
       <details class="cartao" id="personalizar">
         <summary>Personalizar corrida <span>corredor, pista, cenário e efeitos</span></summary>
         <div class="detalhe-corpo custom-grid">
-          <div id="previa"><canvas id="preview" width="380" height="380" aria-label="Prévia do corredor selecionado"></canvas></div>
+          <div class="previa-custom">
+            <header><strong>Resultado visual</strong><span>atualiza ao selecionar</span></header>
+            <canvas id="preview-custom" width="520" height="340" aria-label="Prévia detalhada das skins selecionadas"></canvas>
+          </div>
           <div class="opcoes-visuais">
             <div class="rot">Corredor</div><div class="linha" id="skins-corredor"></div>
             <div class="rot">Portões</div><div class="linha" id="skins-portal"></div>
@@ -654,7 +694,7 @@
 
     VEL_BASE: 3600, VEL_GANHO: 0.025, VEL_TETO: 1.7,
     GATILHO_PORTAO: 220, PLACAR_TAM: 7,
-    CHANCE_ITEM: 0.55,
+    CHANCE_ITEM: 0.55, ALCANCE_ITEM: 6800,
   };
 
   const CHAVE = "tabuada.v4";
@@ -1651,18 +1691,19 @@
     if (!it || it.pego) return;
     const z = zDoItem(i);
     if (z < camZ + 200 || z > camZ + CFG.SEGMENTOS_VISIVEIS * CFG.SEG) return;
+    if (z - camZ > CFG.ALCANCE_ITEM) return;
 
     const flutua = Math.sin(t * 3 + i) * 120;
     const p = projetar(faixaX(it.faixa), 700 + flutua, z, camZ);
     if (!p) return;
     const r = p.escala * 620 * A / 2;
-    if (r < 4) return;
+    if (r < 9) return;
 
     if (Render3D.disponivel && !cv3d.hidden) {
       const brilho = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*1.7);
       brilho.addColorStop(0,"rgba(115,238,255,.34)"); brilho.addColorStop(.52,"rgba(144,86,255,.16)"); brilho.addColorStop(1,"rgba(80,220,255,0)");
       ctx.fillStyle=brilho; ctx.beginPath(); ctx.arc(p.x,p.y,r*1.7,0,Math.PI*2); ctx.fill();
-      Render3D.desenhar("powerup",p.x,p.y,r*.86,0,t+i*.17,"#58e6ff");
+      Render3D.desenhar("powerup",p.x,p.y,Math.min(r*.86,82),0,t+i*.17,"#58e6ff");
       return;
     }
 
@@ -2166,29 +2207,84 @@
 
   const preview = el("preview");
   const pctx = preview.getContext("2d");
+  const previewCustom = el("preview-custom"), pctxCustom = previewCustom.getContext("2d");
 
   function pintarPreview() {
     pctx.setTransform(1, 0, 0, 1, 0, 0);
     pctx.clearRect(0, 0, preview.width, preview.height);
 
     const w = preview.width, h = preview.height;
+    const horizonte = h * .43;
     const ceu = pctx.createLinearGradient(0, 0, 0, h * .62);
     ceu.addColorStop(0, T.ceuTopo); ceu.addColorStop(1, T.ceuBaixo);
     pctx.fillStyle = ceu; pctx.fillRect(0, 0, w, h);
-    pctx.fillStyle = T.chao[0]; pctx.fillRect(0, h*.52, w, h*.48);
+    pctx.fillStyle = T.astro; pctx.beginPath(); pctx.arc(w*.82,h*.15,h*.055,0,Math.PI*2); pctx.fill();
+    pctx.fillStyle = T.chao[0]; pctx.fillRect(0, horizonte, w, h-horizonte);
+
+    const desenharMiniCenario = (x, base, escala, indice) => {
+      const tipo = dados.cenario;
+      pctx.save(); pctx.translate(x,base);
+      if (tipo === "deserto") {
+        pctx.strokeStyle=T.cenario; pctx.lineWidth=escala*.22; pctx.lineCap="round";
+        pctx.beginPath(); pctx.moveTo(0,0); pctx.lineTo(0,-escala); pctx.moveTo(0,-escala*.55); pctx.lineTo(-escala*.32,-escala*.68); pctx.moveTo(0,-escala*.38); pctx.lineTo(escala*.3,-escala*.52); pctx.stroke();
+      } else if (tipo === "cidade") {
+        pctx.fillStyle=indice%2?T.cenario:T.cenarioEsc; pctx.fillRect(-escala*.35,-escala,escala*.7,escala);
+        pctx.fillStyle=T.astro; for(let y=-escala*.82;y<-.16*escala;y+=escala*.24) for(let q=-1;q<=1;q+=2) pctx.fillRect(q*escala*.13,y,escala*.09,escala*.1);
+      } else if (tipo === "neve") {
+        pctx.fillStyle=T.cenarioEsc; poligono(pctx,[[-escala*.8,0],[0,-escala],[escala*.8,0]],true,false);
+        pctx.fillStyle="#f7fdff"; poligono(pctx,[[-escala*.28,-escala*.65],[0,-escala],[escala*.3,-escala*.63],[escala*.08,-escala*.72]],true,false);
+      } else {
+        pctx.fillStyle=T.cenarioEsc; pctx.fillRect(-escala*.1,-escala*.35,escala*.2,escala*.35);
+        pctx.fillStyle=indice%2?T.cenario:T.cenarioEsc; poligono(pctx,[[-escala*.62,-escala*.28],[0,-escala],[escala*.62,-escala*.28]],true,false);
+        poligono(pctx,[[-escala*.48,-escala*.5],[0,-escala*1.22],[escala*.48,-escala*.5]],true,false);
+      }
+      pctx.restore();
+    };
+    [0,1,2,3].forEach((i)=>{
+      const lado=i<2?-1:1,prof=i%2, x=w/2+lado*w*(.29+prof*.14), escala=h*(.11+prof*.055);
+      desenharMiniCenario(x,horizonte+h*(.03+prof*.06),escala,i);
+    });
 
     const pista = PISTAS[dados.pista] || PISTAS.classica;
     pctx.fillStyle = (pista.pista || T.pista)[0];
-    poligono(pctx, [[w*.36,h*.5],[w*.64,h*.5],[w*.94,h],[w*.06,h]], true, false);
+    poligono(pctx, [[w*.39,horizonte],[w*.61,horizonte],[w*.96,h],[w*.04,h]], true, false);
+    pctx.strokeStyle=(pista.borda||T.borda)[0]; pctx.lineWidth=7;
+    pctx.beginPath(); pctx.moveTo(w*.39,horizonte); pctx.lineTo(w*.04,h); pctx.moveTo(w*.61,horizonte); pctx.lineTo(w*.96,h); pctx.stroke();
     pctx.strokeStyle = pista.faixa || T.faixa; pctx.lineWidth = 4; pctx.setLineDash([15,10]);
-    for (const x of [.45,.55]) { pctx.beginPath(); pctx.moveTo(w*.5+(x-.5)*w*.18,h*.5); pctx.lineTo(w*.5+(x-.5)*w*1.35,h); pctx.stroke(); }
+    for (const x of [.45,.55]) { pctx.beginPath(); pctx.moveTo(w*.5+(x-.5)*w*.22,horizonte); pctx.lineTo(w*.5+(x-.5)*w*1.45,h); pctx.stroke(); }
     pctx.setLineDash([]);
 
+    // Portão e tipografia também participam da prévia.
+    const portal=dados.portal, gx=w*.5, gy=h*.31, gw=w*.39, gh=h*.25, cel=gw/3;
+    for(let i=0;i<3;i++){
+      const x=gx-gw/2+i*cel, cor=S.portoes[i];
+      pctx.save(); pctx.strokeStyle=cor; pctx.fillStyle=cor; pctx.lineWidth=portal==="batente"?8:3;
+      if(portal==="cortina"){
+        pctx.globalAlpha=.3; pctx.fillRect(x,gy,cel,gh); pctx.globalAlpha=.8;
+        for(let q=6;q<cel;q+=12){pctx.fillRect(x+q,gy+8+(q%3)*3,2,gh-15);}
+      }else if(portal==="neon"){
+        pctx.shadowColor=cor; pctx.shadowBlur=12; pctx.strokeRect(x+2,gy,cel-4,gh);
+      }else if(portal==="prisma"){
+        const g=pctx.createLinearGradient(x,gy,x+cel,gy+gh); g.addColorStop(0,"rgba(255,255,255,.08)"); g.addColorStop(.5,cor); g.addColorStop(1,"rgba(255,255,255,.12)"); pctx.globalAlpha=.5; pctx.fillStyle=g; pctx.fillRect(x,gy,cel,gh); pctx.globalAlpha=1; pctx.strokeRect(x+1,gy+1,cel-2,gh-2);
+      }else{
+        pctx.strokeRect(x+3,gy+3,cel-6,gh-3); pctx.fillRect(x,gy,cel,7);
+      }
+      pctx.shadowBlur=0; pctx.globalAlpha=1; pctx.fillStyle=T.css.tinta; pctx.strokeStyle="rgba(0,0,0,.55)"; pctx.lineWidth=5;
+      pctx.font=`800 ${Math.round(h*.09)}px ${FONTES[dados.fonte].css}`; pctx.textAlign="center"; pctx.textBaseline="middle";
+      const numero=[6,8,4][i]; pctx.strokeText(numero,x+cel/2,gy+gh*.55); pctx.fillText(numero,x+cel/2,gy+gh*.55); pctx.restore();
+    }
+
     pctx.save();
-    pctx.translate(w / 2, h * .73);
-    pctx.fillStyle = "rgba(0,0,0,.28)"; pctx.beginPath(); pctx.ellipse(0, 72, 76, 20, 0, 0, Math.PI*2); pctx.fill();
-    (CORREDORES[dados.corredor] || CORREDORES.menino).desenhar(pctx, 68, tempoJogo, S.portoes[0]);
+    pctx.translate(w / 2, h * .79);
+    const rr=h*.14;
+    pctx.fillStyle = "rgba(0,0,0,.3)"; pctx.beginPath(); pctx.ellipse(0, rr*.95, rr*1.05, rr*.28, 0, 0, Math.PI*2); pctx.fill();
+    (CORREDORES[dados.corredor] || CORREDORES.menino).desenhar(pctx, rr, tempoJogo, S.portoes[0]);
     pctx.restore();
+
+    el("preview-titulo").textContent=`${CORREDORES[dados.corredor].nome} · ${PISTAS[dados.pista].nome}`;
+    el("preview-detalhes").textContent=`${TEMAS[dados.tema].nome} · ${CENARIOS[dados.cenario].nome} · Portão ${PORTAIS[dados.portal].nome} · Números ${FONTES[dados.fonte].nome}`;
+    pctxCustom.setTransform(1,0,0,1,0,0); pctxCustom.clearRect(0,0,previewCustom.width,previewCustom.height);
+    pctxCustom.drawImage(preview,0,0,previewCustom.width,previewCustom.height);
   }
 
   function garantirSelecoesDisponiveis() {
@@ -2204,10 +2300,27 @@
 
   function montarBotoes(container, mapa, atual, aoEscolher) {
     container.replaceChildren();
+    const grupo=container.id;
     for (const [chave, def] of Object.entries(mapa)) {
       const b = document.createElement("button");
       b.type = "button";
-      b.textContent = def.nome;
+      b.dataset.grupo=grupo;
+      const mini=document.createElement("span"), nome=document.createElement("span");
+      mini.className="skin-mini"; nome.className="skin-nome"; nome.textContent=def.nome;
+      if(grupo==="skins-tema"){
+        mini.style.setProperty("--mini-a",def.ceuTopo); mini.style.setProperty("--mini-b",def.ceuBaixo);
+      }else if(grupo==="skins-pista"){
+        const cores=def.pista||T.pista; mini.style.setProperty("--mini-a",cores[0]); mini.style.setProperty("--mini-b",def.faixa||T.faixa);
+      }else if(grupo==="skins-fonte"){
+        mini.textContent="42"; mini.style.fontFamily=def.css; mini.style.fontWeight="800";
+      }else if(grupo==="skins-portal"){
+        mini.textContent="8"; mini.style.setProperty("--mini-cor",S.portoes[Object.keys(mapa).indexOf(chave)%S.portoes.length]);
+      }else if(grupo==="skins-cenario"){
+        mini.textContent=({floresta:"▲",deserto:"⌇",cidade:"▥",neve:"△"})[chave]||"◇";
+      }else{
+        mini.textContent=({menino:"☺",carro:"GT",foguete:"▲",bananella:"BA",coccodrillo:"CO",cappuccino:"CA"})[chave]||def.nome.slice(0,2).toUpperCase();
+      }
+      b.append(mini,nome);
       b.setAttribute("aria-pressed", String(chave === atual()));
       b.addEventListener("click", () => {
         aoEscolher(chave);
