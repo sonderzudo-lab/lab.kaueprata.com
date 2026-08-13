@@ -65,6 +65,8 @@ const wheelGeo = new THREE.CylinderGeometry(.34, .34, .3, 20);
 wheelGeo.rotateZ(Math.PI / 2);
 const wheelHubGeo = new THREE.CylinderGeometry(.17, .17, .315, 16);
 wheelHubGeo.rotateZ(Math.PI / 2);
+const brakeDiscGeo = new THREE.CylinderGeometry(.255, .255, .035, 20);
+brakeDiscGeo.rotateZ(Math.PI / 2);
 const gatePostGeo = new THREE.CapsuleGeometry(.052, 1.98, 5, 12);
 const gateBeamGeo = new THREE.CapsuleGeometry(.052, 1.02, 5, 12);
 const gatePanelGeo = new THREE.PlaneGeometry(1.08, 2.02);
@@ -130,7 +132,10 @@ function createCar(color) {
   const glass = mat("#0b3856", { metalness: .34, roughness: .08 });
   const rubber = mat("#080b10", { roughness: .95 });
   const metal = mat("#b9c4cf", { metalness: .92, roughness: .14 });
+  const brakeMetal = mat("#5f6872", { metalness: .94, roughness: .32 });
+  const caliper = mat("#ffb21c", { metalness: .38, roughness: .24 });
   const red = mat("#ff2448", { emissive: "#b2082d", roughness: .16 });
+  const redHot = mat("#ff6b7e", { emissive: "#ff183f", roughness: .12 });
   const white = mat("#f1fbff", { emissive: "#789aa9", roughness: .14 });
 
   // Plataforma baixa, larga e em cunha: a leitura agora é de supercarro,
@@ -152,16 +157,33 @@ function createCar(color) {
   mesh(boxGeo, dark, [0, 1.255, -.13], [.96, .035, .54], bodyRig);
   const engineGlass = mesh(boxGeo, glass, [0, .81, -1.03], [1.18, .045, .52], bodyRig);
   engineGlass.rotation.x = -.11;
+  // Plenum e coletores ficam visíveis sob a tampa do motor.
+  for (const x of [-.36, -.12, .12, .36]) {
+    const intake = mesh(new THREE.CylinderGeometry(.065, .065, .42, 10), metal, [x, .79, -1.02], [1, 1, 1], bodyRig, false);
+    intake.rotation.x = Math.PI / 2;
+  }
+  mesh(boxGeo, dark, [0, .77, -.99], [.24, .1, .46], bodyRig, false);
   for (const x of [-.45, -.15, .15, .45]) {
     const louver = mesh(boxGeo, dark, [x, .855, -.99], [.035, .035, .54], bodyRig, false);
     louver.rotation.x = -.11;
+  }
+  // Entradas de ar laterais profundas, acompanhando os ombros traseiros.
+  for (const side of [-1, 1]) {
+    const intake = mesh(boxGeo, dark, [side * 1.055, .49, -.26], [.055, .27, .62], bodyRig);
+    intake.rotation.z = -side * .15;
+    mesh(boxGeo, metal, [side * 1.086, .49, -.26], [.012, .19, .44], bodyRig, false);
   }
 
   // Traseira limpa com faixa de LED contínua, difusor profundo e escapamento
   // central duplo — os elementos que mais aparecem durante a corrida.
   mesh(boxGeo, dark, [0, .43, -1.735], [1.88, .3, .055], bodyRig);
   mesh(boxGeo, red, [0, .59, -1.77], [1.58, .055, .026], bodyRig, false);
+  for (let i = -6; i <= 6; i++) {
+    mesh(boxGeo, redHot, [i * .115, .592, -1.788], [.045, .026, .012], bodyRig, false);
+  }
   for (const x of [-.84, .84]) mesh(boxGeo, red, [x, .55, -1.77], [.12, .13, .026], bodyRig, false);
+  const badge = mesh(new THREE.OctahedronGeometry(.06, 0), metal, [0, .71, -1.778], [1, .7, .35], bodyRig, false);
+  badge.rotation.z = Math.PI / 4;
   mesh(boxGeo, dark, [0, .15, -1.79], [1.96, .2, .23], bodyRig);
   for (const x of [-.68, -.34, 0, .34, .68]) mesh(boxGeo, dark, [x, .17, -1.91], [.035, .2, .3], bodyRig);
   for (const x of [-.2, .2]) {
@@ -176,12 +198,21 @@ function createCar(color) {
     const support = mesh(boxGeo, dark, [x, .84, -1.42], [.045, .38, .08], bodyRig);
     support.rotation.x = -.17;
   }
+  for (const side of [-1, 1]) {
+    const endplate = mesh(boxGeo, dark, [side * .92, 1.02, -1.48], [.035, .18, .25], bodyRig);
+    endplate.rotation.x = -.08;
+  }
+  // Espinha aerodinâmica liga o teto à tampa do motor.
+  const spine = mesh(boxGeo, paintLight, [0, 1.02, -.59], [.045, .24, .68], bodyRig);
+  spine.rotation.x = -.28;
 
   const wheels = [], frontWheels = [];
   for (const side of [-1, 1]) for (const z of [-1.02, 1.08]) {
     const rear = z < 0;
     const carrier = new THREE.Group(); carrier.position.set(side * (rear ? 1.08 : .98), rear ? .3 : .28, z); g.add(carrier);
     const wheel = mesh(wheelGeo, rubber, [0, 0, 0], [rear ? 1.13 : .98, rear ? 1.13 : .98, rear ? 1.13 : .98], carrier); wheels.push(wheel);
+    mesh(brakeDiscGeo, brakeMetal, [side > 0 ? .17 : -.17, 0, 0], [1, 1, 1], carrier, false);
+    mesh(boxGeo, caliper, [side > 0 ? .195 : -.195, .08, -.19], [.04, .13, .08], carrier, false);
     mesh(wheelHubGeo, metal, [side > 0 ? .012 : -.012, 0, 0], [1, 1, 1], carrier);
     for (let i = 0; i < 5; i++) {
       const spoke = mesh(boxGeo, dark, [side > 0 ? .175 : -.175, 0, 0], [.025, .04, .24], carrier, false);

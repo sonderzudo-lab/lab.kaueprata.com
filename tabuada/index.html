@@ -1267,7 +1267,10 @@
     vidas: 3, escudo: false, dobroAte: 0, lentoAte: 0,
     concluiu: false, errosDetalhes: new Map(),
   };
-  const jogador = { z: 0, faixa: 1, x: 0, inclinacao: 0, arrastando: false };
+  const jogador = {
+    z: 0, faixa: 1, x: 0, alvoX: 0, velocidadeX: 0,
+    inclinacao: 0, arrastando: false,
+  };
   let camX = 0, travaPortao = 0, tremor = 0, poeira = [], tempoJogo = 0;
   let itens = new Map();   // índice do portão -> item ou null
 
@@ -1316,7 +1319,8 @@
     });
     banco = new Map(); baralhosFatores = new Map(); itens = new Map();
     jogador.z = zDoPortao(1) - CFG.VAO * 0.92;
-    jogador.faixa = 1; jogador.x = faixaX(1); jogador.inclinacao = 0; jogador.arrastando = false;
+    jogador.faixa = 1; jogador.x = faixaX(1); jogador.alvoX = jogador.x;
+    jogador.velocidadeX = 0; jogador.inclinacao = 0; jogador.arrastando = false;
     camX = 0; travaPortao = 0; tremor = 0; poeira = []; tempoJogo = 0;
   }
 
@@ -2266,12 +2270,29 @@
       Audio.motorEm(razaoVel());
       atualizarVelocimetro(dt);
 
-      const antes = jogador.x;
-      if (!jogador.arrastando) jogador.x += (faixaX(jogador.faixa) - jogador.x) * Math.min(dt * 9, 1);
-      const desl = (jogador.x - antes) / Math.max(dt, .001);
-      const alvoInc = Math.max(-.3, Math.min(.3, -desl / 9000));
-      jogador.inclinacao += (alvoInc - jogador.inclinacao) * Math.min(dt * 8, 1);
-      camX += (jogador.x * .55 - camX) * Math.min(dt * 4, 1);
+      // Mola criticamente amortecida: segue o gesto sem colar no ponteiro e,
+      // ao soltar, continua suavemente até o centro da faixa escolhida.
+      const destinoX = jogador.arrastando ? jogador.alvoX : faixaX(jogador.faixa);
+      const frequencia = jogador.arrastando ? 19 : 11.5;
+      const passosFisica = Math.max(1, Math.ceil(dt / .012));
+      const passoFisica = dt / passosFisica;
+      for (let passo = 0; passo < passosFisica; passo++) {
+        const aceleracao = (destinoX - jogador.x) * frequencia * frequencia
+          - jogador.velocidadeX * frequencia * 2;
+        jogador.velocidadeX += aceleracao * passoFisica;
+        jogador.velocidadeX = Math.max(-9200, Math.min(9200, jogador.velocidadeX));
+        jogador.x += jogador.velocidadeX * passoFisica;
+      }
+      if (!jogador.arrastando && Math.abs(destinoX - jogador.x) < .35 && Math.abs(jogador.velocidadeX) < 2) {
+        jogador.x = destinoX; jogador.velocidadeX = 0;
+      }
+
+      const alvoInc = Math.max(-.27, Math.min(.27, -jogador.velocidadeX / 7600));
+      jogador.inclinacao += (alvoInc - jogador.inclinacao) * (1 - Math.exp(-dt * 9));
+      const cameraCompacta = L < 600;
+      const alvoCamera = jogador.x * (cameraCompacta ? .9 : .5)
+        + jogador.velocidadeX * (cameraCompacta ? .007 : .012);
+      camX += (alvoCamera - camX) * (1 - Math.exp(-dt * (cameraCompacta ? 5.2 : 3.4)));
 
       const alvo = jogo.portao;
       if (jogador.z >= zDoItem(alvo)) pegarItem(alvo);
@@ -2680,14 +2701,14 @@
     inicioArrasto = null;
     jogador.arrastando = false;
     palco.classList.remove("arrastando");
-    jogador.x = faixaX(jogador.faixa);
-    camX = jogador.x * .55;
+    jogador.alvoX = faixaX(jogador.faixa);
   }
 
   palco.addEventListener("pointerdown", (ev) => {
     if (estado !== "jogando" || ev.target.closest?.("button")) return;
     ponteiroArrasto = ev.pointerId;
     inicioArrasto = { x: ev.clientX, faixa: jogador.faixa, jogadorX: jogador.x };
+    jogador.alvoX = jogador.x;
     jogador.arrastando = true;
     palco.classList.add("arrastando");
     palco.setPointerCapture?.(ev.pointerId);
@@ -2701,12 +2722,10 @@
     const deslocamento = ev.clientX - inicioArrasto.x;
     const larguraDeFaixa = Math.max(rect.width * .26, 82);
     const passoMundo = CFG.PISTA_MEIA * .62;
-    const anterior = jogador.x;
     const novoX = Math.max(faixaX(0), Math.min(faixaX(CFG.PORTAS - 1), inicioArrasto.jogadorX + deslocamento / larguraDeFaixa * passoMundo));
-    jogador.x = novoX;
+    jogador.alvoX = novoX;
     const novaFaixa = Math.max(0, Math.min(CFG.PORTAS - 1, Math.round(inicioArrasto.faixa + deslocamento / larguraDeFaixa)));
     if (novaFaixa !== jogador.faixa) { jogador.faixa = novaFaixa; Audio.mover(); }
-    jogador.inclinacao = Math.max(-.34, Math.min(.34, -(novoX - anterior) / 900));
     ev.preventDefault();
   });
 
