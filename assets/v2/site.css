@@ -35,15 +35,18 @@
 }
 
 :root {
-  --bg: #0a0a0b;
-  --fg: #e8e8e6;
+  color-scheme: dark;
+  --bg: #0f1012;
+  --surface: #14171a;
+  --surface-raised: #181c20;
+  --fg: #ecedeb;
   --accent: #1ec8e0;
-  --body: #d4d4d0;
-  --soft: #b8b8b4;
-  --muted: #8a8a8e;
-  --dim: #808085;
-  --line: #1e1e21;
-  --line-strong: #2a2a2e;
+  --body: #d9dad7;
+  --soft: #c1c3c1;
+  --muted: #979a9f;
+  --dim: #878b90;
+  --line: #2a2e34;
+  --line-strong: #383e46;
   --ease: cubic-bezier(.4, 0, .2, 1);
   --sans: "Space Grotesk", sans-serif;
   --mono: "JetBrains Mono", monospace;
@@ -102,7 +105,7 @@ a:hover { color: var(--accent); }
   align-items: center;
   justify-content: space-between;
   padding: 20px 32px 34px;
-  background: linear-gradient(#0a0a0b 42%, rgba(10, 10, 11, 0));
+  background: linear-gradient(#0f1012 42%, rgba(15, 16, 18, 0));
   font: 12px var(--mono);
   letter-spacing: .08em;
 }
@@ -260,14 +263,14 @@ a:hover { color: var(--accent); }
   border: 1px solid var(--line-strong);
   border-radius: 5px;
   outline: none;
-  background: transparent;
+  background: var(--surface);
   color: var(--fg);
   font: 15px var(--sans);
   transition: border-color .2s var(--ease), background .2s var(--ease);
 }
 
 .search-wrap input::placeholder { color: var(--dim); }
-.search-wrap input:focus { border-color: var(--accent); background: rgba(255, 255, 255, .015); }
+.search-wrap input:focus { border-color: var(--accent); background: var(--surface-raised); }
 .search-key {
   position: absolute;
   top: 50%;
@@ -279,6 +282,7 @@ a:hover { color: var(--accent); }
   height: 24px;
   border: 1px solid var(--line-strong);
   border-radius: 4px;
+  background: var(--surface-raised);
   color: var(--dim);
   font: 11px var(--mono);
   pointer-events: none;
@@ -293,13 +297,13 @@ a:hover { color: var(--accent); }
   padding: 30px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: rgba(255, 255, 255, .006);
+  background: var(--surface);
   transition: border-color .22s var(--ease), background .22s var(--ease), transform .22s var(--ease);
 }
 
 .app-card-link:hover {
   border-color: var(--accent);
-  background: rgba(30, 200, 224, .025);
+  background: color-mix(in srgb, var(--surface-raised) 96%, var(--accent));
   color: var(--fg);
   transform: translateY(-2px);
 }
