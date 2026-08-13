@@ -9,7 +9,7 @@ window.KP_APPS = [
       pt: "Escolha uma tabuada, personalize corredor, pista e cenário e atravesse o resultado certo em uma corrida educativa.",
       en: "Choose a multiplication table, customize your runner, track, and scenery, then race through the correct answers."
     },
-    tags: ["JavaScript", "Canvas 2D", "Web Audio"],
+    tags: ["JavaScript", "Canvas 2D", "WebGL", "Web Audio"],
     date: "2026-08-13",
     status: {
       pt: "disponível",

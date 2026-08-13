@@ -31,6 +31,7 @@
   }
   #palco { position: relative; width: 100%; height: 100%; touch-action: none; }
   canvas#pista { display: block; width: 100%; height: 100%; }
+  canvas#corredor3d { position: absolute; z-index: 2; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
 
   /* ============================================================ painel == */
 
@@ -410,6 +411,7 @@
 
 <div id="palco">
   <canvas id="pista"></canvas>
+  <canvas id="corredor3d" aria-hidden="true"></canvas>
   <div id="dano"></div>
 
   <div id="painel" hidden>
@@ -595,7 +597,7 @@
     CENARIO_PASSO: 800,          // em unidades de mundo, não de câmera
 
     VEL_BASE: 3600, VEL_GANHO: 0.025, VEL_TETO: 1.7,
-    RECUO_ERRO: 0.45, JANELA_DECISAO: 0.45, PLACAR_TAM: 7,
+    GATILHO_PORTAO: 220, PLACAR_TAM: 7,
     CHANCE_ITEM: 0.55,
   };
 
@@ -1100,7 +1102,7 @@
     concluiu: false, errosDetalhes: new Map(),
   };
   const jogador = { z: 0, faixa: 1, x: 0, inclinacao: 0 };
-  let camX = 0, travaPortao = 0, portaoPendente = 0, prazoDecisao = 0, tremor = 0, poeira = [], tempoJogo = 0;
+  let camX = 0, travaPortao = 0, tremor = 0, poeira = [], tempoJogo = 0;
   let itens = new Map();   // índice do portão -> item ou null
 
   const modoAtual = () => MODOS[dados.modo] || MODOS.normal;
@@ -1142,20 +1144,156 @@
     banco = new Map(); baralhosFatores = new Map(); itens = new Map();
     jogador.z = zDoPortao(1) - CFG.VAO * 0.92;
     jogador.faixa = 1; jogador.x = faixaX(1); jogador.inclinacao = 0;
-    camX = 0; travaPortao = 0; portaoPendente = 0; prazoDecisao = 0; tremor = 0; poeira = []; tempoJogo = 0;
+    camX = 0; travaPortao = 0; tremor = 0; poeira = []; tempoJogo = 0;
   }
 
   /* ==================================================================
      9. Projeção em perspectiva
-        Sem biblioteca 3D: a página publicada bloqueia scripts externos.
+        Pista em Canvas 2D e corredores especiais em WebGL nativo.
      ================================================================== */
 
   const cv = document.getElementById("pista");
   const ctx = cv.getContext("2d");
+  const cv3d = document.getElementById("corredor3d");
   const palco = document.getElementById("palco");
   const semMovimento = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   let L = 0, A = 0, meioY = 0;
+
+  // Carro e foguete usam WebGL nativo: são malhas tridimensionais low-poly,
+  // com profundidade, oclusão e luz direcional reais. O restante do jogo
+  // continua no Canvas 2D para preservar o visual simples e o carregamento.
+  const Render3D = (() => {
+    const fallback = { disponivel: false, medir() {}, limpar() {}, desenhar() {} };
+    const gl = cv3d.getContext("webgl", { alpha: true, antialias: true, premultipliedAlpha: true });
+    if (!gl) return fallback;
+    try {
+
+    const compilar = (tipo, fonte) => {
+      const shader = gl.createShader(tipo); gl.shaderSource(shader, fonte); gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader));
+      return shader;
+    };
+    const programa = gl.createProgram();
+    gl.attachShader(programa, compilar(gl.VERTEX_SHADER, `
+      attribute vec3 aPos; attribute vec3 aNormal; attribute vec3 aColor;
+      uniform vec2 uViewport; uniform vec2 uCenter; uniform float uScale;
+      uniform vec3 uRot; varying vec3 vColor;
+      vec3 giroX(vec3 p, float a){ float c=cos(a),s=sin(a); return vec3(p.x,p.y*c-p.z*s,p.y*s+p.z*c); }
+      vec3 giroY(vec3 p, float a){ float c=cos(a),s=sin(a); return vec3(p.x*c+p.z*s,p.y,-p.x*s+p.z*c); }
+      vec3 giroZ(vec3 p, float a){ float c=cos(a),s=sin(a); return vec3(p.x*c-p.y*s,p.x*s+p.y*c,p.z); }
+      void main(){
+        vec3 p=giroZ(giroX(giroY(aPos,uRot.y),uRot.x),uRot.z);
+        vec3 n=normalize(giroZ(giroX(giroY(aNormal,uRot.y),uRot.x),uRot.z));
+        float perspectiva=7.0/(7.0+p.z);
+        vec2 tela=uCenter+vec2(p.x,-p.y)*uScale*perspectiva;
+        gl_Position=vec4(tela.x/uViewport.x*2.0-1.0,1.0-tela.y/uViewport.y*2.0,p.z/12.0,1.0);
+        float luz=.34+max(dot(n,normalize(vec3(-.45,.8,-.6))),0.0)*.66;
+        vColor=aColor*luz;
+      }`));
+    gl.attachShader(programa, compilar(gl.FRAGMENT_SHADER, `
+      precision mediump float; varying vec3 vColor;
+      void main(){ gl_FragColor=vec4(vColor,1.0); }`));
+    gl.linkProgram(programa);
+    if (!gl.getProgramParameter(programa, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(programa));
+    gl.useProgram(programa);
+
+    const locais = {
+      pos: gl.getAttribLocation(programa, "aPos"), normal: gl.getAttribLocation(programa, "aNormal"), cor: gl.getAttribLocation(programa, "aColor"),
+      viewport: gl.getUniformLocation(programa, "uViewport"), centro: gl.getUniformLocation(programa, "uCenter"), escala: gl.getUniformLocation(programa, "uScale"), rot: gl.getUniformLocation(programa, "uRot"),
+    };
+    const rgb = (hex) => {
+      const h = String(hex || "#ffc23d").replace("#", "");
+      const n = Number.parseInt(h.length === 3 ? h.split("").map((x) => x + x).join("") : h.slice(0, 6), 16);
+      return Number.isFinite(n) ? [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255] : [1, .76, .24];
+    };
+    const misturar = (a, b, t) => a.map((v, i) => v * (1 - t) + b[i] * t);
+    const cache = new Map();
+
+    function montar(tipo, corHex) {
+      const pos = [], normal = [], cores = [];
+      const colocar = (p, n, c) => { pos.push(...p); normal.push(...n); cores.push(...c); };
+      const tri = (a, b, c, n, cor) => { colocar(a,n,cor); colocar(b,n,cor); colocar(c,n,cor); };
+      const quad = (a,b,c,d,n,cor) => { tri(a,b,c,n,cor); tri(a,c,d,n,cor); };
+      const caixa = (x,y,z,dx,dy,dz,cor) => {
+        const X=dx/2,Y=dy/2,Z=dz/2, x0=x-X,x1=x+X,y0=y-Y,y1=y+Y,z0=z-Z,z1=z+Z;
+        quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[0,0,-1],cor);
+        quad([x1,y0,z1],[x0,y0,z1],[x0,y1,z1],[x1,y1,z1],[0,0,1],cor);
+        quad([x0,y0,z1],[x0,y0,z0],[x0,y1,z0],[x0,y1,z1],[-1,0,0],cor);
+        quad([x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0],[1,0,0],cor);
+        quad([x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1],[0,1,0],cor);
+        quad([x0,y0,z1],[x1,y0,z1],[x1,y0,z0],[x0,y0,z0],[0,-1,0],cor);
+      };
+      const cilindroY = (x,y,z,raio,altura,lados,cor,raioTopo=raio) => {
+        const y0=y-altura/2,y1=y+altura/2;
+        for(let i=0;i<lados;i++){
+          const a=i*Math.PI*2/lados,b=(i+1)*Math.PI*2/lados;
+          const p0=[x+Math.cos(a)*raio,y0,z+Math.sin(a)*raio], p1=[x+Math.cos(b)*raio,y0,z+Math.sin(b)*raio];
+          const p2=[x+Math.cos(b)*raioTopo,y1,z+Math.sin(b)*raioTopo], p3=[x+Math.cos(a)*raioTopo,y1,z+Math.sin(a)*raioTopo];
+          const n=[Math.cos((a+b)/2),0,Math.sin((a+b)/2)]; quad(p0,p1,p2,p3,n,cor);
+          tri([x,y0,z],p1,p0,[0,-1,0],cor);
+          if(raioTopo>0) tri([x,y1,z],p3,p2,[0,1,0],cor);
+        }
+      };
+      const base = rgb(corHex), escuro = misturar(base,[.03,.05,.09],.58), claro = misturar(base,[1,1,1],.34);
+
+      if (tipo === "carro") {
+        const preto=[.025,.035,.055], vidro=[.16,.52,.72], vermelho=[1,.06,.09], metal=[.62,.68,.75];
+        caixa(0,.48,0,2.55,.58,3.45,base);
+        caixa(0,.82,.12,2.2,.32,2.9,claro);
+        caixa(0,1.18,.16,1.65,.72,1.72,escuro);
+        caixa(0,1.25,-.72,1.42,.48,.07,vidro);
+        caixa(0,1.55,.2,1.35,.08,1.26,claro);
+        for(const s of [-1,1]) for(const z of [-1.08,1.08]) caixa(s*1.23,.36,z,.4,.68,.76,preto);
+        caixa(0,.46,-1.77,2.34,.2,.16,escuro);
+        for(const s of [-1,1]) caixa(s*.72,.67,-1.8,.48,.25,.09,vermelho);
+        caixa(0,1.13,-1.62,2.55,.12,.36,escuro);
+        for(const s of [-1,1]) caixa(s*.82,.94,-1.58,.11,.4,.11,metal);
+        caixa(0,.42,-1.9,.82,.14,.08,metal);
+      } else {
+        const metal=[.78,.84,.9], vidro=[.12,.62,.86], vermelho=[.95,.08,.16], fogo=[1,.42,.02], fogo2=[1,.92,.18];
+        cilindroY(0,1.55,0,.68,2.85,10,metal,.57);
+        cilindroY(0,3.46,0,.57,1.18,10,base,0);
+        cilindroY(0,1.98,-.64,.29,.12,10,vidro,.29);
+        for(const s of [-1,1]) {
+          const n=[s,0,-.15]; tri([s*.5,.65,-.05],[s*1.2,-.05,.1],[s*.52,-.05,.12],n,vermelho);
+          tri([s*.5,.65,-.05],[s*.52,-.05,.12],[s*.5,.6,.42],n,vermelho);
+        }
+        caixa(0,.05,0,.72,.2,.72,escuro);
+        cilindroY(0,-.58,0,.34,1.1,8,fogo,0);
+        cilindroY(0,-.72,0,.16,.9,8,fogo2,0);
+      }
+
+      const buffers = [pos, normal, cores].map((dados) => {
+        const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(dados),gl.STATIC_DRAW); return b;
+      });
+      return { buffers, vertices: pos.length / 3 };
+    }
+
+    function malha(tipo, cor) {
+      const chave=`${tipo}:${cor}`;
+      if(!cache.has(chave)) cache.set(chave,montar(tipo,cor));
+      return cache.get(chave);
+    }
+    function ligar(buffer, local) { gl.bindBuffer(gl.ARRAY_BUFFER,buffer); gl.enableVertexAttribArray(local); gl.vertexAttribPointer(local,3,gl.FLOAT,false,0,0); }
+
+      return {
+      disponivel: true,
+      medir(dpr) { cv3d.width=Math.round(L*dpr); cv3d.height=Math.round(A*dpr); gl.viewport(0,0,cv3d.width,cv3d.height); },
+      limpar() { gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT); },
+      desenhar(tipo, centroX, baseY, escala, inclinacao, t, cor) {
+        this.limpar(); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK);
+        const dpr=cv3d.width/L, m=malha(tipo,cor); ligar(m.buffers[0],locais.pos); ligar(m.buffers[1],locais.normal); ligar(m.buffers[2],locais.cor);
+        gl.uniform2f(locais.viewport,cv3d.width,cv3d.height); gl.uniform2f(locais.centro,centroX*dpr,baseY*dpr); gl.uniform1f(locais.escala,escala*dpr);
+        const flutua=tipo==="foguete" && !semMovimento ? Math.sin(t*3)*.045 : 0;
+        gl.uniform3f(locais.rot,-.22+flutua,(tipo==="foguete"?.24:.06)-inclinacao*1.7,inclinacao*.72);
+        gl.drawArrays(gl.TRIANGLES,0,m.vertices);
+      },
+      };
+    } catch {
+      return fallback;
+    }
+  })();
 
   function medir() {
     const r = palco.getBoundingClientRect();
@@ -1163,6 +1301,7 @@
     L = Math.max(r.width, 320); A = Math.max(r.height, 320);
     cv.width = Math.round(L * dpr); cv.height = Math.round(A * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    Render3D.medir(dpr);
     meioY = A * 0.46;
   }
 
@@ -1458,7 +1597,8 @@
     const p = projetar(jogador.x, 0, camZ + CFG.JOGADOR_A_FRENTE, camZ);
     if (!p) return;
     const r = p.escala * 155 * A / 2;
-    const salto = semMovimento ? 0 : Math.abs(Math.sin(t * 9)) * r * .3;
+    const tipo3d = (dados.corredor === "carro" || dados.corredor === "foguete") ? dados.corredor : null;
+    const salto = semMovimento ? 0 : Math.abs(Math.sin(t * 9)) * r * (tipo3d ? .055 : .3);
 
     ctx.fillStyle = "rgba(0,0,0,.28)";
     ctx.beginPath(); ctx.ellipse(p.x, p.y, r * .95, r * .3, 0, 0, Math.PI * 2); ctx.fill();
@@ -1472,11 +1612,16 @@
       ctx.globalAlpha = 1;
     }
 
-    ctx.save();
-    ctx.translate(p.x, p.y - r - salto);
-    ctx.rotate(jogador.inclinacao);
-    (CORREDORES[dados.corredor] || CORREDORES.menino).desenhar(ctx, r, t, S.portoes[0]);
-    ctx.restore();
+    if (tipo3d && Render3D.disponivel) {
+      Render3D.desenhar(tipo3d, p.x, p.y - salto, r * (tipo3d === "carro" ? .94 : .86), jogador.inclinacao, t, S.portoes[0]);
+    } else {
+      Render3D.limpar();
+      ctx.save();
+      ctx.translate(p.x, p.y - r - salto);
+      ctx.rotate(jogador.inclinacao);
+      (CORREDORES[dados.corredor] || CORREDORES.menino).desenhar(ctx, r, t, S.portoes[0]);
+      ctx.restore();
+    }
   }
 
   function soltarPoeira(cor, quanto) {
@@ -1691,11 +1836,13 @@
 
     if (jogo.escudo) {
       jogo.escudo = false;
+      jogo.portao = i + 1;
       Audio.poder();
-      mostrarFlash(conta, "O escudo segurou essa", PODERES.escudo.cor, 1.9, "escudo");
-      jogador.z = Math.max(zDoPortao(i) - CFG.VAO * CFG.RECUO_ERRO, zDoPortao(i) - CFG.VAO + 400);
-      travaPortao = 0; portaoPendente = 0;
+      mostrarFlash(conta, "O escudo absorveu o dano. Continue!", PODERES.escudo.cor, 1.15, "escudo");
       pintarPainel(false);
+      if (i >= totalPortoes()) {
+        jogo.concluiu = true; estado = "concluindo"; setTimeout(terminar, 1200);
+      }
       return;
     }
 
@@ -1713,13 +1860,12 @@
     }
 
     Audio.vidaPerdida();
-    // O erro fica MAIS tempo na tela que o acerto, de propósito. Com 3 portas,
-    // errar duas vezes garantiria o acerto por eliminação — o que impede isso
-    // é a criança voltar tendo lido a conta resolvida.
-    mostrarFlash(conta, "A resposta correta é essa", S.ruim, 2.0, "erro");
-    jogador.z = Math.max(zDoPortao(i) - CFG.VAO * CFG.RECUO_ERRO, zDoPortao(i) - CFG.VAO + 400);
-    travaPortao = 0; portaoPendente = 0;
+    jogo.portao = i + 1;
+    mostrarFlash(conta, "Você perdeu uma vida, mas a corrida continua", S.ruim, 1.25, "erro");
     pintarPainel(temVidas);
+    if (i >= totalPortoes()) {
+      jogo.concluiu = true; estado = "concluindo"; setTimeout(terminar, 1300);
+    }
   }
 
   /* ==================================================================
@@ -1746,18 +1892,11 @@
 
       const alvo = jogo.portao;
       if (jogador.z >= zDoItem(alvo)) pegarItem(alvo);
-      if (!portaoPendente && travaPortao !== alvo && jogador.z >= zDoPortao(alvo) + CFG.PORTAO_ESPESSURA) {
-        // A travessia abre uma janela curta de confirmação. Assim, um comando
-        // dado visualmente em cima da linha do portão ainda pertence àquele
-        // portão, mesmo que o próximo frame já esteja alguns pixels adiante.
-        portaoPendente = alvo;
-        prazoDecisao = tempoJogo + CFG.JANELA_DECISAO;
-      }
-      if (portaoPendente === alvo && tempoJogo >= prazoDecisao) {
-        const decidido = portaoPendente;
-        portaoPendente = 0;
-        travaPortao = decidido;
-        avaliar(decidido);
+      if (travaPortao !== alvo && jogador.z >= zDoPortao(alvo) + CFG.GATILHO_PORTAO) {
+        // Julga dentro da espessura visual do portão: o comando dado no último
+        // instante entra no mesmo frame e o feedback aparece durante a passagem.
+        travaPortao = alvo;
+        avaliar(alvo);
       }
     } else if (estado === "menu" || estado === "fim") {
       tempoJogo += dt;   // menu continua com a cena viva

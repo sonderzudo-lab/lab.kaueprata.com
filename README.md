@@ -35,8 +35,8 @@ iniciais.
 
 ## Primeiro projeto
 
-- `/tabuada/`: Corrida da Tabuada, jogo educacional em Canvas 2D com níveis,
-  progressão local e visuais personalizáveis.
+- `/tabuada/`: Corrida da Tabuada, jogo educacional em Canvas 2D e WebGL com
+  níveis, progressão local e visuais personalizáveis.
 
 ## Licença
 
