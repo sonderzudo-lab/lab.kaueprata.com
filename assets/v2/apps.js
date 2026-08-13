@@ -6,8 +6,8 @@ window.KP_APPS = [
       en: "Math Race"
     },
     description: {
-      pt: "Escolha uma tabuada, atravesse o resultado certo e desbloqueie corredores, pistas e cenários em uma corrida educativa.",
-      en: "Choose a multiplication table, race through the correct answers, and unlock runners, tracks, and scenery."
+      pt: "Escolha uma tabuada, personalize corredor, pista e cenário e atravesse o resultado certo em uma corrida educativa.",
+      en: "Choose a multiplication table, customize your runner, track, and scenery, then race through the correct answers."
     },
     tags: ["JavaScript", "Canvas 2D", "Web Audio"],
     date: "2026-08-13",

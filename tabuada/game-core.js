@@ -129,10 +129,6 @@
     return attempts ? Math.round((correct / attempts) * 100) : 0;
   }
 
-  function isUnlocked(definition, accumulatedCorrect) {
-    return !definition.unlockAt || accumulatedCorrect >= definition.unlockAt;
-  }
-
   return Object.freeze({
     TABLE_MIN,
     TABLE_MAX,
@@ -148,6 +144,5 @@
     factorSlotForGate,
     makeFactorDeck,
     accuracy,
-    isUnlocked,
   });
 });

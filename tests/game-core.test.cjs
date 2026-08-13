@@ -47,10 +47,7 @@ test("o baralho contém cada fator uma única vez", () => {
   assert.deepEqual(deck.slice().sort((a, b) => a - b), [1,2,3,4,5,6,7,8,9,10]);
 });
 
-test("precisão e desbloqueios são determinísticos", () => {
+test("a precisão considera acertos e erros", () => {
   assert.equal(Core.accuracy(8, 2), 80);
   assert.equal(Core.accuracy(0, 0), 0);
-  assert.equal(Core.isUnlocked({ unlockAt: 10 }, 9), false);
-  assert.equal(Core.isUnlocked({ unlockAt: 10 }, 10), true);
-  assert.equal(Core.isUnlocked({}, 0), true);
 });

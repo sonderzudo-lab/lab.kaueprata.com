@@ -16,7 +16,7 @@ português em `/pt/`.
 ## Testes
 
 O núcleo de regras da Corrida da Tabuada usa apenas APIs nativas do navegador e
-do Node. Para validar progressão, perguntas e desbloqueios:
+do Node. Para validar progressão, perguntas e pontuação:
 
 ```bash
 node --test tests/game-core.test.cjs
@@ -36,7 +36,7 @@ iniciais.
 ## Primeiro projeto
 
 - `/tabuada/`: Corrida da Tabuada, jogo educacional em Canvas 2D com níveis,
-  progressão local e visuais desbloqueáveis.
+  progressão local e visuais personalizáveis.
 
 ## Licença
 
