@@ -725,7 +725,7 @@
 
     VEL_BASE: 3600, VEL_GANHO: 0.025, VEL_TETO: 1.7,
     GATILHO_PORTAO: 220, PLACAR_TAM: 7,
-    CHANCE_ITEM: 0.55, ALCANCE_ITEM: 6800,
+    CHANCE_ITEM: 0.55,
   };
 
   const CHAVE = "tabuada.v4";
@@ -1826,8 +1826,6 @@
     if (!it || it.pego) return;
     const z = zDoItem(i);
     if (z < camZ + 200 || z > camZ + CFG.SEGMENTOS_VISIVEIS * CFG.SEG) return;
-    if (z - camZ > CFG.ALCANCE_ITEM) return;
-
     const flutua = Math.sin(t * 3 + i) * 120;
     const p = projetar(faixaX(it.faixa), 700 + flutua, z, camZ);
     if (!p) return;
@@ -1944,10 +1942,21 @@
         }
       }
 
+      // Mantém um corredor contínuo: o portão anterior e os três seguintes
+      // já existem antes de entrarem no campo de visão. Itens futuros também
+      // são sorteados aqui, longe da câmera, e não no instante em que aparecem.
+      const ultimoPortao = totalPortoes();
+      const portaoAtual = Math.min(jogo.portao, ultimoPortao);
       const gates = [];
-      const qAtual = perguntaDo(jogo.portao);
-      gates.push({ index: jogo.portao, z: zDoPortao(jogo.portao), a: qAtual.a, b: qAtual.b, options: qAtual.opcoes });
-      const atual = itemDo(Math.min(jogo.portao, totalPortoes()));
+      for (let i = Math.max(1, portaoAtual - 1); i <= Math.min(ultimoPortao, portaoAtual + 3); i++) {
+        const q = perguntaDo(i);
+        gates.push({ index: i, z: zDoPortao(i), a: q.a, b: q.b, options: q.opcoes });
+      }
+      const items = [];
+      for (let i = Math.max(2, portaoAtual); i <= Math.min(ultimoPortao, portaoAtual + 3); i++) {
+        const item = itemDo(i);
+        if (item && !item.pego) items.push({ index: i, lane: item.faixa, z: zDoItem(i) });
+      }
       const skin = PISTAS[dados.pista] || PISTAS.classica;
       const dtCena = Math.min(Math.max(t - ultimoTempoCena3D, 0), .05); ultimoTempoCena3D = t;
       window.CorridaCena3D.render({
@@ -1956,9 +1965,7 @@
         inclination: jogador.inclinacao, dragging: jogador.arrastando,
         runner: dados.corredor, runnerColor: S.portoes[0], scenario: dados.cenario,
         gates, gateColors: S.portoes.slice(0, 3),
-        item: atual && !atual.pego && zDoItem(jogo.portao) - jogador.z <= CFG.ALCANCE_ITEM && zDoItem(jogo.portao) > jogador.z + 200
-          ? { lane: atual.faixa, z: zDoItem(jogo.portao) }
-          : null,
+        items,
         colors: {
           road: (skin.pista || T.pista)[0], ground: T.chao[0],
           lane: skin.faixa || T.faixa, edges: (skin.borda || T.borda).slice(0, 2),
