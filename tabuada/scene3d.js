@@ -503,7 +503,9 @@ function render(state) {
   syncGates(state.gates, state.gateColors);
   for (const model of gateGroups.values()) {
     const distance = model.position.z - z;
-    const nearFade = THREE.MathUtils.smoothstep(distance, -5, -.5);
+    // Some no instante da travessia, antes de o arco ficar entre a câmera e
+    // o carro. O próximo portão já está no horizonte, então não há vazio.
+    const nearFade = THREE.MathUtils.smoothstep(distance, .25, 1.4);
     const structureFade = (1 - THREE.MathUtils.smoothstep(distance, 22, 42)) * nearFade;
     const labelFade = (1 - THREE.MathUtils.smoothstep(distance, 20, 29)) * nearFade;
     model.visible = structureFade > .004;
