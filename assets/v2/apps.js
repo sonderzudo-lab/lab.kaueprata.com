@@ -6,8 +6,8 @@ window.KP_APPS = [
       en: "Math Race"
     },
     description: {
-      pt: "Um jogo de corrida para praticar multiplicação. Atravesse a porta com o resultado certo, avance pelas tabuadas e use poderes pelo caminho.",
-      en: "A racing game for practicing multiplication. Choose the gate with the right answer, advance through the tables and use power-ups along the way."
+      pt: "Escolha uma tabuada, atravesse o resultado certo e desbloqueie corredores, pistas e cenários em uma corrida educativa.",
+      en: "Choose a multiplication table, race through the correct answers, and unlock runners, tracks, and scenery."
     },
     tags: ["JavaScript", "Canvas 2D", "Web Audio"],
     date: "2026-08-13",
