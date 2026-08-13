@@ -32,6 +32,7 @@
   #palco { position: relative; width: 100%; height: 100%; touch-action: none; }
   canvas#pista { display: block; width: 100%; height: 100%; }
   canvas#corredor3d { position: absolute; z-index: 2; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
+  canvas#corredor3d[hidden] { display: none; }
 
   /* ============================================================ painel == */
 
@@ -270,18 +271,15 @@
   ol.placar .pts { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--marca); }
   ol.placar .vazio { grid-column: 1 / -1; color: var(--tinta-fraca); font-family: var(--corpo); font-size: 13px; }
 
-  .numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; width: min(100%, 560px); }
+  .numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; width: 100%; }
   .numeros div { padding: 11px 8px; border: 2px solid var(--painel-borda); border-radius: 14px; background: color-mix(in srgb, var(--painel) 70%, transparent); }
   .numeros .n { display: block; font-family: var(--display); font-weight: 700; font-size: clamp(21px, 4.4vw, 31px); line-height: 1.05; font-variant-numeric: tabular-nums; }
   .numeros .r { display: block; margin-top: 3px; font-size: clamp(9.5px, 1.35vw, 11px); letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-fraca); }
-  #n-pontos .n { color: var(--marca); }
 
-  #recorde {
-    display: grid; gap: 9px; justify-items: center; width: min(94vw, 440px); padding: 13px;
-    border: 2px solid var(--marca); border-radius: 17px; background: color-mix(in srgb, var(--marca) 14%, transparent);
-  }
+  #recorde { display: grid; gap: 9px; align-content: center; justify-items: start; min-height: 100%; padding: 18px; border: 1px solid color-mix(in srgb, var(--marca) 65%, var(--painel-borda)); border-radius: 18px; background: color-mix(in srgb, var(--marca) 11%, var(--painel)); }
   #recorde[hidden] { display: none; }
-  #recorde p { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(14px, 2.2vw, 17px); }
+  #recorde p { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(14px, 2.2vw, 17px); }
+  #recorde input { width: 100%; }
 
   input[type="text"] {
     width: min(72vw, 240px); padding: 10px 15px; border: 2px solid var(--painel-borda);
@@ -291,11 +289,38 @@
   input[type="text"]:focus-visible { outline: 3px solid var(--marca); outline-offset: 2px; border-color: var(--marca); }
 
   #frase { margin: 0; font-family: var(--display); font-size: clamp(13px, 1.9vw, 16px); color: var(--marca); font-style: italic; }
-  #resumo-erros { width: min(100%, 560px); text-align: left; }
+  #resumo-erros { min-height: 100%; padding: 18px; border: 1px solid var(--painel-borda); border-radius: 18px; background: color-mix(in srgb, var(--fundo) 42%, transparent); text-align: left; }
   #resumo-erros h3 { margin: 0 0 8px; font: 700 13px var(--display); color: var(--tinta-fraca); text-transform: uppercase; letter-spacing: .08em; }
   #lista-erros { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
   #lista-erros li { padding: 7px 10px; border: 1px solid var(--painel-borda); border-radius: 999px; font: 700 13px var(--display); }
   #recompensa { margin: 0; color: var(--marca); font: 700 14px var(--display); }
+
+  /* ===================================================== chegada final == */
+  #fim { z-index: 8; align-content: center; background: radial-gradient(circle at 50% 12%, color-mix(in srgb, var(--marca) 12%, transparent), transparent 42%), color-mix(in srgb, var(--fundo) 88%, transparent); }
+  .resultado-shell {
+    position: relative; display: grid; gap: clamp(14px, 2.2vw, 20px); width: min(100%, 900px);
+    padding: clamp(22px, 4vw, 38px); overflow: hidden; border: 1px solid color-mix(in srgb, var(--painel-borda) 80%, transparent);
+    border-radius: 30px; background: linear-gradient(145deg, color-mix(in srgb, var(--painel) 96%, transparent), color-mix(in srgb, var(--fundo) 94%, transparent));
+    box-shadow: 0 30px 90px rgba(0,0,0,.46), inset 0 1px rgba(255,255,255,.04); text-align: left;
+  }
+  .faixa-xadrez { position: absolute; inset: 0 0 auto; height: 9px; background: conic-gradient(from 90deg, var(--marca) 0 25%, transparent 0 50%, var(--marca) 0 75%, transparent 0) 0 0/18px 18px; }
+  .resultado-cabecalho { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 16px; padding-top: 4px; }
+  .resultado-selo { display: grid; place-items: center; width: clamp(58px, 8vw, 78px); aspect-ratio: 1; border: 2px solid var(--marca); border-radius: 22px 8px 22px 8px; background: color-mix(in srgb, var(--marca) 13%, var(--fundo)); color: var(--marca); font: 900 clamp(24px, 4vw, 38px)/1 var(--display); transform: rotate(-3deg); }
+  .resultado-cabecalho h2 { font-size: clamp(27px, 5vw, 48px); }
+  .resultado-cabecalho #frase { margin-top: 6px; }
+  .resultado-painel { display: grid; grid-template-columns: minmax(210px,.72fr) minmax(0,1.28fr); gap: 14px; }
+  .volta-final { display: grid; align-content: center; min-height: 178px; padding: 20px; border-radius: 22px; color: #171006; background: linear-gradient(145deg, var(--marca), color-mix(in srgb, var(--marca) 74%, #ff7a00)); box-shadow: inset 0 1px rgba(255,255,255,.35); }
+  .volta-final .r { font: 800 10px var(--display); letter-spacing: .16em; text-transform: uppercase; opacity: .68; }
+  .volta-final .n { font: 900 clamp(48px, 9vw, 82px)/.92 var(--display); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+  .volta-final #recompensa { margin-top: 10px; color: inherit; font-size: 12px; opacity: .76; }
+  .telemetria-final { display: grid; align-content: space-between; gap: 12px; padding: 16px; border: 1px solid var(--painel-borda); border-radius: 22px; background: color-mix(in srgb, var(--fundo) 42%, transparent); }
+  .telemetria-final .numeros div { padding: 14px 9px; }
+  .telemetria-final #fim-detalhe { margin: 0; max-width: none; }
+  .resultado-secundario { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+  .resultado-secundario:has(#resumo-erros[hidden]):has(#recorde[hidden]) { display: none; }
+  .resultado-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; padding-top: 2px; }
+  .resultado-acoes .principal { display: inline-flex; align-items: center; gap: 9px; }
+  .resultado-acoes .principal::before { content: ""; width: 18px; height: 18px; background: conic-gradient(from 90deg,#171006 0 25%,transparent 0 50%,#171006 0 75%,transparent 0) 0 0/9px 9px; }
 
   /* ---------------------------------------------------------- flash ---- */
 
@@ -313,6 +338,7 @@
   #flash[data-tipo="acerto"] { --flash-cor: var(--bom); }
   #flash[data-tipo="erro"] { --flash-cor: var(--ruim); }
   #flash[data-tipo="poder"], #flash[data-tipo="escudo"] { --flash-cor: var(--marca); }
+  #flash[data-tipo="roleta"] { --flash-cor: #58e6ff; }
   #flash.visivel { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(0); }
   #flash[data-tipo="erro"].visivel { animation: flash-erro .32s ease-out; }
   @keyframes flash-erro { 25% { transform: translate(calc(-50% - 8px), 0); } 55% { transform: translate(calc(-50% + 6px), 0); } }
@@ -378,7 +404,18 @@
     .niveis { grid-template-columns: repeat(5, 1fr); }
     #previa { min-height: 176px; }
     canvas#preview { width: 165px; height: 165px; }
-    .numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .resultado-shell { padding: 21px 14px 16px; border-radius: 22px; }
+    #fim { align-content: start; }
+    .resultado-cabecalho { grid-template-columns: auto 1fr; gap: 11px; }
+    .resultado-selo { width: 52px; border-radius: 16px 7px; }
+    .resultado-painel, .resultado-secundario { grid-template-columns: 1fr; }
+    .volta-final { min-height: 132px; }
+    .numeros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .numeros div { padding-inline: 4px; }
+    .numeros .n { font-size: 22px; }
+    .numeros .r { font-size: 8px; letter-spacing: .04em; }
+    .resultado-acoes { justify-content: stretch; }
+    .resultado-acoes button { flex: 1 1 auto; }
     #painel { top: 8px; width: calc(100% - 16px); min-height: 43px; padding: 3px 5px; border-radius: 14px; }
     .ficha { padding: 4px 8px; }
     .ficha .rotulo { font-size: 7.5px; letter-spacing: .07em; }
@@ -411,7 +448,7 @@
 
 <div id="palco">
   <canvas id="pista"></canvas>
-  <canvas id="corredor3d" aria-hidden="true"></canvas>
+  <canvas id="corredor3d" aria-hidden="true" hidden></canvas>
   <div id="dano"></div>
 
   <div id="painel" hidden>
@@ -457,6 +494,7 @@
 
   <div id="quiz-acessivel" class="sr-only" aria-live="polite" hidden>
     <p id="pergunta-acessivel"></p>
+    <p id="item-acessivel"></p>
     <div id="respostas-acessiveis">
       <button type="button" data-faixa="0"></button>
       <button type="button" data-faixa="1"></button>
@@ -548,30 +586,48 @@
 
   <!-- ======================================================== fim ====== -->
   <div class="tela" id="fim" hidden>
-    <h2 id="fim-titulo">Fim de corrida</h2>
-    <p id="frase"></p>
+    <main class="resultado-shell">
+      <div class="faixa-xadrez" aria-hidden="true"></div>
+      <header class="resultado-cabecalho">
+        <span class="resultado-selo" id="resultado-selo" aria-hidden="true">🏁</span>
+        <div>
+          <p class="eyebrow">Resultado oficial</p>
+          <h2 id="fim-titulo">Fim de corrida</h2>
+          <p id="frase"></p>
+        </div>
+      </header>
 
-    <div class="numeros">
-      <div id="n-pontos"><span class="n" id="v-fim-pontos">0</span><span class="r">Pontos</span></div>
-      <div><span class="n" id="v-fim-acertos">0</span><span class="r">Acertos</span></div>
-      <div><span class="n" id="v-fim-precisao">0%</span><span class="r">Precisão</span></div>
-      <div><span class="n" id="v-fim-seq">0</span><span class="r">Melhor seq.</span></div>
-    </div>
+      <section class="resultado-painel" aria-label="Desempenho da corrida">
+        <div class="volta-final" id="n-pontos">
+          <span class="r">Pontuação final</span>
+          <span class="n" id="v-fim-pontos">0</span>
+          <p id="recompensa"></p>
+        </div>
+        <div class="telemetria-final">
+          <div class="numeros">
+            <div><span class="n" id="v-fim-acertos">0</span><span class="r">Acertos</span></div>
+            <div><span class="n" id="v-fim-precisao">0%</span><span class="r">Precisão</span></div>
+            <div><span class="n" id="v-fim-seq">0</span><span class="r">Melhor seq.</span></div>
+          </div>
+          <p class="legenda" id="fim-detalhe"></p>
+        </div>
+      </section>
 
-    <p class="legenda" id="fim-detalhe"></p>
-    <div id="resumo-erros" hidden><h3>Vale revisar</h3><ul id="lista-erros"></ul></div>
-    <p id="recompensa"></p>
+      <section class="resultado-secundario">
+        <div id="resumo-erros" hidden><h3>Pit stop de revisão</h3><ul id="lista-erros"></ul></div>
+        <div id="recorde" hidden>
+          <p>Novo tempo de referência</p>
+          <span class="legenda">Assine sua volta para entrar no placar.</span>
+          <input type="text" id="nome" maxlength="10" placeholder="Nome do piloto" autocomplete="off" />
+          <button id="b-salvar" type="button">Registrar resultado</button>
+        </div>
+      </section>
 
-    <div id="recorde" hidden>
-      <p>Entrou pro placar! 🏆</p>
-      <input type="text" id="nome" maxlength="10" placeholder="seu nome" autocomplete="off" />
-      <button id="b-salvar" type="button">Salvar</button>
-    </div>
-
-    <div class="linha" style="justify-content:center">
-      <button id="b-denovo" class="principal" type="button">Jogar de novo</button>
-      <button id="b-menu" type="button">Voltar ao menu</button>
-    </div>
+      <footer class="resultado-acoes">
+        <button id="b-menu" type="button">Garagem e níveis</button>
+        <button id="b-denovo" class="principal" type="button">Nova corrida</button>
+      </footer>
+    </main>
   </div>
 </div>
 
@@ -1118,15 +1174,15 @@
     return jogo.portao <= jogo.lentoAte ? base * 0.62 : base;
   };
 
-  // Item de um portão: sorteado uma vez e guardado, senão muda de frame em
-  // frame e pisca na tela.
+  // A cápsula esconde o prêmio até ser coletada. O resultado é decidido uma
+  // única vez por portão para a roleta ser justa e não mudar entre frames.
   function itemDo(i) {
     if (!itens.has(i)) {
       let it = null;
       if (i > 1 && Math.random() < CFG.CHANCE_ITEM) {
         const opcoes = ["escudo", "lento", "dobro"];
         if (modoAtual().vidas !== Infinity && jogo.vidas < modoAtual().vidas + 2) opcoes.push("vida");
-        it = { tipo: opcoes[Math.floor(Math.random() * opcoes.length)], faixa: Math.floor(Math.random() * CFG.PORTAS), pego: false };
+        it = { premio: opcoes[Math.floor(Math.random() * opcoes.length)], faixa: Math.floor(Math.random() * CFG.PORTAS), pego: false };
       }
       itens.set(i, it);
     }
@@ -1136,6 +1192,7 @@
 
   function reiniciar() {
     const m = modoAtual();
+    roletaPoder++;
     Object.assign(jogo, {
       portao: 1, pontos: 0, acertos: 0, erros: 0, seq: 0, melhorSeq: 0,
       vidas: m.vidas, escudo: false, dobroAte: 0, lentoAte: 0,
@@ -1164,7 +1221,7 @@
   // com profundidade, oclusão e luz direcional reais. O restante do jogo
   // continua no Canvas 2D para preservar o visual simples e o carregamento.
   const Render3D = (() => {
-    const fallback = { disponivel: false, medir() {}, limpar() {}, desenhar() {} };
+    const fallback = { disponivel: false, medir() {}, iniciar() {}, limpar() {}, desenhar() {} };
     const gl = cv3d.getContext("webgl", { alpha: true, antialias: true, premultipliedAlpha: true });
     if (!gl) return fallback;
     try {
@@ -1215,6 +1272,12 @@
       const colocar = (p, n, c) => { pos.push(...p); normal.push(...n); cores.push(...c); };
       const tri = (a, b, c, n, cor) => { colocar(a,n,cor); colocar(b,n,cor); colocar(c,n,cor); };
       const quad = (a,b,c,d,n,cor) => { tri(a,b,c,n,cor); tri(a,c,d,n,cor); };
+      const normalDaFace = (a,b,c) => {
+        const u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]];
+        const n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],m=Math.hypot(...n)||1;
+        return n.map((x)=>x/m);
+      };
+      const face = (a,b,c,cor) => tri(a,b,c,normalDaFace(a,b,c),cor);
       const caixa = (x,y,z,dx,dy,dz,cor) => {
         const X=dx/2,Y=dy/2,Z=dz/2, x0=x-X,x1=x+X,y0=y-Y,y1=y+Y,z0=z-Z,z1=z+Z;
         quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[0,0,-1],cor);
@@ -1250,7 +1313,7 @@
         caixa(0,1.13,-1.62,2.55,.12,.36,escuro);
         for(const s of [-1,1]) caixa(s*.82,.94,-1.58,.11,.4,.11,metal);
         caixa(0,.42,-1.9,.82,.14,.08,metal);
-      } else {
+      } else if (tipo === "foguete") {
         const metal=[.78,.84,.9], vidro=[.12,.62,.86], vermelho=[.95,.08,.16], fogo=[1,.42,.02], fogo2=[1,.92,.18];
         cilindroY(0,1.55,0,.68,2.85,10,metal,.57);
         cilindroY(0,3.46,0,.57,1.18,10,base,0);
@@ -1262,6 +1325,22 @@
         caixa(0,.05,0,.72,.2,.72,escuro);
         cilindroY(0,-.58,0,.34,1.1,8,fogo,0);
         cilindroY(0,-.72,0,.16,.9,8,fogo2,0);
+      } else {
+        // Cápsula original de pista: núcleo octaédrico e dois anéis orbitais.
+        // Não imita a caixa visual de nenhuma franquia; só mantém a surpresa.
+        const ciano=[.18,.92,1], violeta=[.66,.3,1], branco=[.9,.98,1];
+        const topo=[0,1.05,0], baixo=[0,-1.05,0], anel=[[.92,0,0],[0,0,.92],[-.92,0,0],[0,0,-.92]];
+        for(let i=0;i<4;i++){
+          const a=anel[i],b=anel[(i+1)%4],cor=i%2?ciano:violeta;
+          face(topo,a,b,cor); face(baixo,b,a,misturar(cor,[.02,.06,.12],.28));
+        }
+        caixa(0,0,0,.5,.5,.5,branco);
+        for(let i=0;i<12;i++){
+          const a=i*Math.PI*2/12; caixa(Math.cos(a)*1.32,Math.sin(a)*.2,Math.sin(a)*1.32,.16,.16,.34,i%2?ciano:violeta);
+        }
+        for(let i=0;i<10;i++){
+          const a=i*Math.PI*2/10; caixa(Math.cos(a)*1.1,Math.sin(a)*1.1,0,.14,.3,.14,i%2?branco:violeta);
+        }
       }
 
       const buffers = [pos, normal, cores].map((dados) => {
@@ -1281,12 +1360,14 @@
       disponivel: true,
       medir(dpr) { cv3d.width=Math.round(L*dpr); cv3d.height=Math.round(A*dpr); gl.viewport(0,0,cv3d.width,cv3d.height); },
       limpar() { gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT); },
-      desenhar(tipo, centroX, baseY, escala, inclinacao, t, cor) {
-        this.limpar(); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK);
+      iniciar() { this.limpar(); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK); },
+      desenhar(tipo, centroX, baseY, escala, inclinacao, t, cor, alinhamento=0) {
+        if (cv3d.hidden) return;
         const dpr=cv3d.width/L, m=malha(tipo,cor); ligar(m.buffers[0],locais.pos); ligar(m.buffers[1],locais.normal); ligar(m.buffers[2],locais.cor);
         gl.uniform2f(locais.viewport,cv3d.width,cv3d.height); gl.uniform2f(locais.centro,centroX*dpr,baseY*dpr); gl.uniform1f(locais.escala,escala*dpr);
         const flutua=tipo==="foguete" && !semMovimento ? Math.sin(t*3)*.045 : 0;
-        gl.uniform3f(locais.rot,-.22+flutua,(tipo==="foguete"?.24:.06)-inclinacao*1.7,inclinacao*.72);
+        const rotacao = tipo==="powerup" ? [t*.72,t*1.45,t*.38] : [-.22+flutua,(tipo==="foguete"?.24:.06)+alinhamento-inclinacao*1.7,inclinacao*.72];
+        gl.uniform3f(locais.rot,...rotacao);
         gl.drawArrays(gl.TRIANGLES,0,m.vertices);
       },
       };
@@ -1565,6 +1646,7 @@
   /* ------------------------------------------------------------ item -- */
 
   function desenharItem(i, camZ, t) {
+    if (estado !== "jogando" && estado !== "concluindo") return;
     const it = itemDo(i);
     if (!it || it.pego) return;
     const z = zDoItem(i);
@@ -1576,24 +1658,33 @@
     const r = p.escala * 620 * A / 2;
     if (r < 4) return;
 
-    const poder = PODERES[it.tipo];
+    if (Render3D.disponivel && !cv3d.hidden) {
+      const brilho = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*1.7);
+      brilho.addColorStop(0,"rgba(115,238,255,.34)"); brilho.addColorStop(.52,"rgba(144,86,255,.16)"); brilho.addColorStop(1,"rgba(80,220,255,0)");
+      ctx.fillStyle=brilho; ctx.beginPath(); ctx.arc(p.x,p.y,r*1.7,0,Math.PI*2); ctx.fill();
+      Render3D.desenhar("powerup",p.x,p.y,r*.86,0,t+i*.17,"#58e6ff");
+      return;
+    }
+
+    // Fallback 2D para aparelhos sem WebGL.
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(Math.sin(t * 2 + i) * .16);
-    ctx.fillStyle = poder.cor;
+    ctx.fillStyle = "#58e6ff";
     ctx.strokeStyle = "rgba(0,0,0,.5)";
     ctx.lineWidth = Math.max(r * .12, 1.2);
     ctx.beginPath(); ctx.roundRect(-r, -r, r * 2, r * 2, r * .42); ctx.fill(); ctx.stroke();
     ctx.font = `700 ${Math.round(r * 1.25)}px ${FONTE_UI}`;
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillStyle = "#12161f";
-    ctx.fillText(poder.simbolo, 0, r * .06);
+    ctx.fillText("?", 0, r * .06);
     ctx.restore();
   }
 
   /* --------------------------------------------------------- jogador -- */
 
   function desenharJogador(camZ, t) {
+    if (estado !== "jogando" && estado !== "concluindo") return;
     const p = projetar(jogador.x, 0, camZ + CFG.JOGADOR_A_FRENTE, camZ);
     if (!p) return;
     const r = p.escala * 155 * A / 2;
@@ -1613,9 +1704,9 @@
     }
 
     if (tipo3d && Render3D.disponivel) {
-      Render3D.desenhar(tipo3d, p.x, p.y - salto, r * (tipo3d === "carro" ? .94 : .86), jogador.inclinacao, t, S.portoes[0]);
+      const alinhamentoPista = -(p.x - L / 2) / L * 1.15;
+      Render3D.desenhar(tipo3d, p.x, p.y - salto, r * (tipo3d === "carro" ? .94 : .86), jogador.inclinacao, t, S.portoes[0], alinhamentoPista);
     } else {
-      Render3D.limpar();
       ctx.save();
       ctx.translate(p.x, p.y - r - salto);
       ctx.rotate(jogador.inclinacao);
@@ -1652,6 +1743,7 @@
 
   function desenharCena(t) {
     const camZ = jogador.z;
+    Render3D.iniciar();
     ctx.clearRect(0, 0, L, A);
     ctx.save();
     if (tremor > 0) ctx.translate((Math.random() - .5) * tremor * 26, (Math.random() - .5) * tremor * 26);
@@ -1697,7 +1789,7 @@
   const flash = el("flash"), flashConta = el("flash-conta"), flashNota = el("flash-nota");
   const flashSinal = el("flash-sinal"), flashTitulo = el("flash-titulo");
   const perguntaFixa = el("pergunta-fixa"), contaAtual = el("conta-atual");
-  const perguntaAcessivel = el("pergunta-acessivel");
+  const perguntaAcessivel = el("pergunta-acessivel"), itemAcessivel = el("item-acessivel");
   const respostasAcessiveis = [...el("respostas-acessiveis").querySelectorAll("button")];
 
   function pintarVidas(perdeu) {
@@ -1738,6 +1830,10 @@
       botao.textContent = `Pista ${faixa + 1}: ${q.opcoes[faixa]}`;
       botao.setAttribute("aria-label", `Pista ${faixa + 1}, resposta ${q.opcoes[faixa]}`);
     });
+    const itemAtual = itemDo(Math.min(jogo.portao, totalPortoes()));
+    itemAcessivel.textContent = itemAtual && !itemAtual.pego
+      ? `Cápsula surpresa na pista ${itemAtual.faixa + 1}.`
+      : "";
 
     const razao = razaoVel();
     const fatorLento = jogo.portao <= jogo.lentoAte ? .6 : 1;
@@ -1767,8 +1863,9 @@
     const identidade = {
       acerto: { titulo: "Traçado perfeito", sinal: "✓" },
       erro: { titulo: "Portão incorreto", sinal: "×" },
-      poder: { titulo: "Turbo coletado", sinal: "◆" },
+      poder: { titulo: "Vantagem liberada", sinal: "◆" },
       escudo: { titulo: "Impacto absorvido", sinal: "◇" },
+      roleta: { titulo: "Cápsula surpresa", sinal: "?" },
     }[tipo] || { titulo: "Corrida", sinal: "•" };
     flashConta.textContent = conta;
     flashNota.textContent = nota;
@@ -1792,18 +1889,28 @@
      11. Julgamento
      ================================================================== */
 
+  let roletaPoder = 0;
+
+  function aplicarPoder(tipo) {
+    const poder = PODERES[tipo];
+    if (!poder || (estado !== "jogando" && estado !== "concluindo")) return;
+    Audio.poder(); soltarPoeira(poder.cor, 24);
+    if (tipo === "escudo") jogo.escudo = true;
+    else if (tipo === "dobro") jogo.dobroAte = jogo.portao + 3;
+    else if (tipo === "lento") jogo.lentoAte = jogo.portao + 2;
+    else if (tipo === "vida" && modoAtual().vidas !== Infinity) jogo.vidas++;
+    mostrarFlash(poder.simbolo, `${poder.nome} — ${poder.desc}`, poder.cor, 1.05, "poder");
+    pintarPainel(false);
+  }
+
   function pegarItem(i) {
     const it = itemDo(i);
     if (!it || it.pego || it.faixa !== jogador.faixa) return;
     it.pego = true;
-    Audio.poder();
-    soltarPoeira(PODERES[it.tipo].cor, 18);
-    if (it.tipo === "escudo") jogo.escudo = true;
-    else if (it.tipo === "dobro") jogo.dobroAte = jogo.portao + 3;
-    else if (it.tipo === "lento") jogo.lentoAte = jogo.portao + 2;
-    else if (it.tipo === "vida" && modoAtual().vidas !== Infinity) jogo.vidas++;
-    mostrarFlash(PODERES[it.tipo].simbolo, `${PODERES[it.tipo].nome} — ${PODERES[it.tipo].desc}`, PODERES[it.tipo].cor, 1.1, "poder");
-    pintarPainel(false);
+    const minhaRoleta = ++roletaPoder;
+    Audio.poder(); soltarPoeira("#58e6ff", 16);
+    mostrarFlash("?", "Sorteando sua vantagem…", "#58e6ff", .48, "roleta");
+    setTimeout(() => { if (minhaRoleta === roletaPoder) aplicarPoder(it.premio); }, 420);
   }
 
   function avaliar(i) {
@@ -1929,6 +2036,7 @@
 
   function irParaMenu() {
     estado = "menu"; emJogo = false;
+    cv3d.hidden = true; Render3D.limpar();
     Audio.pararMotor(); Audio.pararMusica();
     telaMenu.hidden = false; telaFim.hidden = true; telaPausa.hidden = true;
     painel.classList.remove("ativo"); cockpitHud.classList.remove("ativo"); canto.classList.remove("ativo");
@@ -1942,6 +2050,7 @@
   function jogar() {
     reiniciar();
     estado = "jogando"; emJogo = true;
+    cv3d.hidden = false;
     telaMenu.hidden = true; telaFim.hidden = true; telaPausa.hidden = true;
     painel.hidden = false; cockpitHud.hidden = false; canto.hidden = false; perguntaFixa.hidden = false; el("quiz-acessivel").hidden = false;
     painel.classList.add("ativo"); cockpitHud.classList.add("ativo"); canto.classList.add("ativo");
@@ -1955,6 +2064,7 @@
   function pausar() {
     if (estado !== "jogando") return;
     estado = "pausado";
+    cv3d.hidden = true; Render3D.limpar();
     Audio.pararMotor(); Audio.pararMusica();
     telaPausa.hidden = false;
     perguntaFixa.hidden = true; el("quiz-acessivel").hidden = true;
@@ -1966,6 +2076,7 @@
     if (estado !== "pausado") return;
     telaPausa.hidden = true;
     estado = "jogando";
+    cv3d.hidden = false;
     perguntaFixa.hidden = false; el("quiz-acessivel").hidden = false;
     perguntaFixa.classList.add("ativo");
     Audio.iniciarMotor(); Audio.iniciarMusica();
@@ -1973,6 +2084,7 @@
 
   function terminar() {
     estado = "fim"; emJogo = false;
+    cv3d.hidden = true; Render3D.limpar();
     Audio.pararMotor(); Audio.pararMusica();
     telaPausa.hidden = true;
     painel.classList.remove("ativo"); cockpitHud.classList.remove("ativo"); canto.classList.remove("ativo");
@@ -1991,6 +2103,8 @@
     el("fim-titulo").textContent = jogo.concluiu
       ? (dados.nivel === "jornada" ? "Jornada concluída!" : `${nivel.nome} concluída!`)
       : (jogo.acertos === 0 ? "Quase!" : "Fim de corrida");
+    telaFim.dataset.resultado = jogo.concluiu ? "concluido" : "interrompido";
+    el("resultado-selo").textContent = jogo.concluiu ? "🏁" : "↻";
     el("frase").textContent = jogo.concluiu ? "Bravissimo! Missão cumprida." : FRASES_FIM[Math.floor(Math.random() * FRASES_FIM.length)];
 
     const resumoErros = el("resumo-erros"), listaErros = el("lista-erros");
