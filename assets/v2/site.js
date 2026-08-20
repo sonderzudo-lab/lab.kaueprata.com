@@ -31,6 +31,7 @@
     const targetLabel = nextTheme === "dark" ? copy.lightTheme : copy.darkTheme;
     themeToggle?.setAttribute("aria-label", targetLabel);
     themeToggle?.setAttribute("title", targetLabel);
+    themeToggle?.setAttribute("aria-pressed", String(nextTheme === "light"));
     themeColor?.setAttribute("content", nextTheme === "dark" ? "#0F1012" : "#F4F3EF");
     const styles = getComputedStyle(document.documentElement);
     particleColor = styles.getPropertyValue("--particle").trim() || particleColor;

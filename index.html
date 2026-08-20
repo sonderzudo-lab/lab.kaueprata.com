@@ -50,7 +50,7 @@
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="preload" href="/assets/v2/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/v2/site.css?v=4">
+  <link rel="stylesheet" href="/assets/v2/site.css?v=5">
   <noscript><style>.app-list{display:none}.noscript-app{display:block}</style></noscript>
 </head>
 <body>
@@ -60,12 +60,9 @@
     <a class="brand" href="/">k.prata · lab</a>
     <nav class="topnav" aria-label="Main navigation">
       <a class="back-home" href="https://kaueprata.com/">site <span aria-hidden="true">↗</span></a>
-      <button class="theme-toggle" type="button" aria-label="Switch to light theme" title="Switch to light theme">
-        <span class="theme-icon" aria-hidden="true">
-          <span class="theme-sun"></span>
-          <span class="theme-sun-rays"></span>
-          <span class="theme-moon"></span>
-        </span>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light theme" title="Switch to light theme" aria-pressed="false">
+        <span class="theme-icon theme-icon-moon" aria-hidden="true"></span>
+        <span class="theme-icon theme-icon-sun" aria-hidden="true"></span>
       </button>
       <div class="lang" role="group" aria-label="Language">
         <a class="lang-btn" href="/pt/" hreflang="pt-BR" data-lang="pt">PT</a>
@@ -141,6 +138,6 @@
   </footer>
 
   <script src="/assets/v2/apps.js" defer></script>
-  <script src="/assets/v2/site.js?v=3" defer></script>
+  <script src="/assets/v2/site.js?v=4" defer></script>
 </body>
 </html>
