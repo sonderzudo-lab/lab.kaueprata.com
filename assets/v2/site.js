@@ -8,14 +8,42 @@
         open: "abrir projeto ↗",
         project: "projeto",
         projects: "projetos",
+        lightTheme: "Mudar para o tema claro",
+        darkTheme: "Mudar para o tema escuro",
         shapes: ["01 / matéria", "02 / órbita", "03 / código", "04 / sistema"]
       }
     : {
         open: "open project ↗",
         project: "project",
         projects: "projects",
+        lightTheme: "Switch to light theme",
+        darkTheme: "Switch to dark theme",
         shapes: ["01 / matter", "02 / orbit", "03 / code", "04 / system"]
       };
+
+  const themeToggle = document.querySelector(".theme-toggle");
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  let particleColor = "rgba(205, 205, 202, .52)";
+  let particleAccent = "rgba(30, 200, 224, .9)";
+  const applyTheme = (theme, save = false) => {
+    const nextTheme = theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = nextTheme;
+    const targetLabel = nextTheme === "dark" ? copy.lightTheme : copy.darkTheme;
+    themeToggle?.setAttribute("aria-label", targetLabel);
+    themeToggle?.setAttribute("title", targetLabel);
+    themeColor?.setAttribute("content", nextTheme === "dark" ? "#0F1012" : "#F4F3EF");
+    const styles = getComputedStyle(document.documentElement);
+    particleColor = styles.getPropertyValue("--particle").trim() || particleColor;
+    particleAccent = styles.getPropertyValue("--particle-accent").trim() || particleAccent;
+    if (save) {
+      try { localStorage.setItem("kp-theme", nextTheme); } catch (_) {}
+    }
+  };
+
+  applyTheme(document.documentElement.dataset.theme);
+  themeToggle?.addEventListener("click", () => {
+    applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+  });
 
   document.querySelectorAll("[data-lang]").forEach((link) => {
     link.addEventListener("click", () => {
@@ -304,7 +332,7 @@
       particle.x = particle.startX + (particle.targetX - particle.startX) * progress;
       particle.y = particle.startY + (particle.targetY - particle.startY) * progress;
       context.beginPath();
-      context.fillStyle = particle.accent ? "rgba(30, 200, 224, .9)" : "rgba(205, 205, 202, .52)";
+      context.fillStyle = particle.accent ? particleAccent : particleColor;
       context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
       context.fill();
     });
