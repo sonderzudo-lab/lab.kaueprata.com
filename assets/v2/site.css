@@ -50,7 +50,11 @@
   --accent-contrast: #0f1012;
   --topbar-solid: #0f1012;
   --topbar-clear: rgba(15, 16, 18, 0);
+  --hero-background: var(--bg);
+  --hero-divider: transparent;
   --hero-glow: rgba(30, 200, 224, .055);
+  --hero-visual-surface: transparent;
+  --hero-visual-line: transparent;
   --particle: rgba(205, 205, 202, .52);
   --particle-accent: rgba(30, 200, 224, .9);
   --ease: cubic-bezier(.4, 0, .2, 1);
@@ -72,11 +76,15 @@
   --line: #d9d7d0;
   --line-strong: #c3c3bc;
   --accent-contrast: #ffffff;
-  --topbar-solid: #f4f3ef;
-  --topbar-clear: rgba(244, 243, 239, 0);
-  --hero-glow: rgba(8, 127, 145, .1);
-  --particle: rgba(42, 48, 52, .42);
-  --particle-accent: rgba(8, 127, 145, .9);
+  --topbar-solid: #e9eeea;
+  --topbar-clear: rgba(233, 238, 234, 0);
+  --hero-background: linear-gradient(125deg, #e9eeea 0%, #f6f4ee 52%, #dcecee 100%);
+  --hero-divider: #cbdad7;
+  --hero-glow: rgba(0, 111, 130, .16);
+  --hero-visual-surface: rgba(255, 255, 255, .42);
+  --hero-visual-line: rgba(8, 127, 145, .18);
+  --particle: rgba(21, 31, 36, .7);
+  --particle-accent: rgba(0, 105, 124, .98);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -219,6 +227,9 @@ a:hover { color: var(--accent); }
   display: flex;
   align-items: center;
   overflow: hidden;
+  border-bottom: 1px solid var(--hero-divider);
+  background: var(--hero-background);
+  transition: background .32s var(--ease), border-color .32s var(--ease);
 }
 
 .hero::after {
@@ -255,7 +266,19 @@ a:hover { color: var(--accent); }
   mask-image: radial-gradient(ellipse 72% 70% at center, #000 50%, transparent 100%);
 }
 
-.hero-visual canvas { display: block; width: 100%; height: 100%; }
+.hero-visual::before {
+  content: "";
+  position: absolute;
+  inset: 8% 5%;
+  border: 1px solid var(--hero-visual-line);
+  border-radius: 50%;
+  background: var(--hero-visual-surface);
+  box-shadow: 0 24px 80px var(--hero-glow);
+  transition: background-color .32s var(--ease), border-color .32s var(--ease), box-shadow .32s var(--ease);
+}
+
+.hero-visual canvas { position: relative; z-index: 1; display: block; width: 100%; height: 100%; }
+:root[data-theme="light"] .hero-visual { opacity: 1; }
 
 .shape-label {
   position: absolute;
@@ -265,6 +288,7 @@ a:hover { color: var(--accent); }
   font: 10px var(--mono);
   letter-spacing: .1em;
   text-transform: uppercase;
+  z-index: 2;
 }
 
 .kicker {
