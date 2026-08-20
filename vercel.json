@@ -9,12 +9,27 @@
       "permanent": false
     },
     {
+      "source": "/analiseUXsitegoiania/",
+      "destination": "/analise-ux-goiania/",
+      "permanent": false
+    },
+    {
       "source": "/analiseuxsitegoiania",
       "destination": "/analise-ux-goiania/",
       "permanent": false
     },
     {
+      "source": "/analiseuxsitegoiania/",
+      "destination": "/analise-ux-goiania/",
+      "permanent": false
+    },
+    {
       "source": "/goiania",
+      "destination": "/analise-ux-goiania/",
+      "permanent": false
+    },
+    {
+      "source": "/goiania/",
       "destination": "/analise-ux-goiania/",
       "permanent": false
     }
