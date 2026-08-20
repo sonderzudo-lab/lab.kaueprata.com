@@ -33,8 +33,10 @@ node --test tests/game-core.test.cjs
 O arquivo `assets/v2/apps.js` é a fonte da lista exibida nas duas páginas
 iniciais.
 
-## Primeiro projeto
+## Projetos
 
+- `/analise-ux-goiania/`: No lugar do cidadão, análise de usabilidade do site da Prefeitura
+  de Goiânia, com as jornadas refeitas dentro de uma réplica animada do site.
 - `/tabuada/`: Corrida da Tabuada, jogo educacional em Canvas 2D e WebGL com
   níveis, progressão local e visuais personalizáveis.
 
